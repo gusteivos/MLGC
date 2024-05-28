@@ -42,7 +42,9 @@ static void lexer_next_char(lexer_t *lexer)
     if (lexer->source_location.index < lexer->source_length)
     {
 
-        lexer->source_char = lexer->source[lexer->source_location.index++];
+        lexer->source_location.index++;
+
+        lexer->source_char = lexer->source[lexer->source_location.index];
 
         lexer_update_source_location(lexer);
 

@@ -174,7 +174,9 @@ char *load_text_file(const char *file_path, size_t *size)
 
     char *buffer = (char *)a_alloc(_size + 1);
 
-    if (fread(buffer, sizeof(char), _size, file) == 0 && _size != 0)
+    size_t count = fread(buffer, sizeof(char), _size, file);
+
+    if (count == 0 && _size != 0)
     {
 
         fprintf(stderr, "Failed to read file: %s\n", file_path);
@@ -187,16 +189,14 @@ char *load_text_file(const char *file_path, size_t *size)
 
     }
 
-    buffer[_size] = '\0';
+    buffer[count] = '\0';
 
     fclose(file);
 
     if (size != NULL)
     {
-    
-        _size = strlen(buffer);
 
-        *size = _size;
+        *size = count;
 
     }
 
