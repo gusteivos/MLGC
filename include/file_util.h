@@ -45,13 +45,14 @@
     char *load_file(const char *file_path, size_t *size);
 
     /**
-    * Loads a text file into memory, ensuring the content is null-terminated.
-    *
-    * @param file_path The path to the file.
-    * @param size A pointer to a size_t variable to store the size of the loaded file (excluding the null terminator).
-    * @return A pointer to the loaded file content in memory, or NULL if an error occurred.
-    *         The caller is responsible for freeing the allocated memory.
-    */
+     * Loads a text file into memory, ensuring the content is null-terminated.
+     *
+     * @param file_path The path to the file.
+     * @param size A pointer to a size_t variable to store the size of the loaded file (excluding the null terminator).
+     *             If NULL, the size is not stored.
+     * @return A pointer to the loaded file content in memory, or NULL if an error occurred.
+     *         The caller is responsible for freeing the allocated memory.
+     */
     char *load_text_file(const char *file_path, size_t *size);
 
 #endif

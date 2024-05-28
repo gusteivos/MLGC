@@ -174,12 +174,10 @@ char *load_text_file(const char *file_path, size_t *size)
 
     char *buffer = (char *)a_alloc(_size + 1);
 
-    size_t __size = 0;
-
     if (fread(buffer, sizeof(char), _size, file) == 0 && _size != 0)
     {
 
-        fprintf(stderr, "Failed to read file: %s, %d\n", file_path, __size);
+        fprintf(stderr, "Failed to read file: %s\n", file_path);
 
         free(buffer);
 
