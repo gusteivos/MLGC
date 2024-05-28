@@ -35,7 +35,21 @@ int main(int argc, char *argv[])
     
     }
 
-    
+    printf("%s", source_file_content);
+
+    lexer_t *lexer = create_lexer(source_file_content, source_file_content_size);
+
+    token_t *token = NULL;
+
+    do
+    {
+
+        token = lexer_lex(lexer);
+
+        print_token(token, true);
+
+    } 
+    while (token != NULL && token->type != TOKEN_TYPE_EOS);
 
     return EXIT_SUCCESS;
 

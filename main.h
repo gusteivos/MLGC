@@ -7,6 +7,7 @@
 
     #include "ascii.h"
     #include "file_util.h"
+    #include "lexer.h"
     #include "location.h"
     #include "util.h"
 
