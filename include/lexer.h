@@ -7,6 +7,7 @@
     #include <stdbool.h>
     #include <string.h>
     #include <ctype.h>
+    #include "location.h"
     #include "token.h"
 
 
@@ -18,8 +19,12 @@
     #define LEXER_PARSE_DIGIT_SEQUENCE_OTHERS "bho."
     #endif
 
-    #ifndef LEXER_CONSIDERED_SPACE_CHAR
-    #define LEXER_CONSIDERED_SPACE_CHAR " \t\n"
+    #ifndef LEXER_CHARS_CONSIDERED_WHITESPACE
+    #define LEXER_CHARS_CONSIDERED_WHITESPACE " \t\n"
+    #endif
+
+    #ifndef LEXER_TAB_WIDTH
+    #define LEXER_TAB_WIDTH 4
     #endif
 
 
@@ -30,13 +35,9 @@
 
         size_t source_length;
 
-        size_t source_index;
+        location_t source_location;
 
         char source_char;
-
-        size_t line;
-
-        size_t column;
 
     } lexer_t;
 
@@ -71,10 +72,13 @@
 
     /**
      * Resets the lexer with a new source and source length.
+     * If the provided source is NULL, it uses the existing source and source length of the lexer.
+     * If the provided source length is 0, it uses strlen to determine the length of the new source string.
      *
      * @param lexer The lexer to be reset.
-     * @param source The new source string to be lexed.
-     * @param source_length The length of the new source string.
+     * @param source The new source string to be lexed. If NULL, the existing source is used.
+     * @param source_length The length of the new source string. If 0, strlen will be used.
+     *                      If source is NULL, the existing source length is used.
      * @return true if the lexer is successfully reset, false otherwise.
      */
     bool reset_lexer(lexer_t *lexer, char *source, size_t source_length);

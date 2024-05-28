@@ -5,6 +5,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <stdbool.h>
+    #include "location.h"
 
 
     typedef enum token_type_s
@@ -31,9 +32,7 @@
 
         char *value;
 
-        size_t line;
-
-        size_t column;
+        location_t location;
 
     } token_t;
 
@@ -42,11 +41,10 @@
      *
      * @param type The type of the token.
      * @param value The value of the token (will be duplicated).
-     * @param line The line where the token was found.
-     * @param column The column where the token was found.
+     * @param location The location where the token was found.
      * @return A pointer to the newly created token, or NULL if allocation fails.
      */
-    token_t *create_token(token_type_t type, char *value, size_t line, size_t column);
+    token_t *create_token(token_type_t type, char *value, location_t location);
 
     /**
      * Initializes an existing token with the provided values.
@@ -54,11 +52,10 @@
      * @param token The token to be initialized.
      * @param type The type of the token.
      * @param value The value of the token (will be duplicated).
-     * @param line The line where the token was found.
-     * @param column The column where the token was found.
+     * @param location The location where the token was found.
      * @return true if initialization is successful, false otherwise.
      */
-    bool init_token(token_t *token, token_type_t type, char *value, size_t line, size_t column);
+    bool init_token(token_t *token, token_type_t type, char *value, location_t location);
 
     /**
      * Prints the token information.

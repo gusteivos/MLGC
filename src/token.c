@@ -20,18 +20,18 @@ char *token_type_to_string(token_type_t type)
 
 }
 
-token_t *create_token(token_type_t type, char *value, size_t line, size_t column)
+token_t *create_token(token_type_t type, char *value, location_t location)
 {
 
     token_t *token = (token_t *)a_alloc(sizeof(token_t));
 
-    init_token(token, type, value, line, column);
+    init_token(token, type, value, location);
 
     return token;
 
 }
 
-bool init_token(token_t *token, token_type_t type, char *value, size_t line, size_t column)
+bool init_token(token_t *token, token_type_t type, char *value, location_t location)
 {
 
     if (!token)
@@ -45,9 +45,7 @@ bool init_token(token_t *token, token_type_t type, char *value, size_t line, siz
 
     token->value = value ? a_duplicate_string(value) : value;
 
-    token->line = line;
-
-    token->column = column;
+    token->location = location;
 
     return true;
 
@@ -76,8 +74,8 @@ bool print_token(token_t *token, bool token_type_name)
     }
 
     fprintf(stdout, "\tvalue: '%s'\n", token->value);
-    fprintf(stdout, "\tline: %zu\n", token->line);
-    fprintf(stdout, "\tcolumn: %zu\n", token->column);
+
+    fprint_location(stdout, &token->location);
 
     return true;
 
