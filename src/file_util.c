@@ -195,6 +195,8 @@ char *load_text_file(const char *file_path, size_t *size)
 
     if (size != NULL)
     {
+    
+        _size = strlen(buffer);
 
         *size = _size;
 
