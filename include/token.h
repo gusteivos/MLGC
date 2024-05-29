@@ -13,6 +13,13 @@
 
         TOKEN_TYPE_INVALID = 0,
 
+        TOKEN_TYPE_LEFT_BRACKET,  /* [ */
+        TOKEN_TYPE_RIGHT_BRACKET, /* ] */
+        TOKEN_TYPE_LEFT_BRACE,    /* { */
+        TOKEN_TYPE_RIGHT_BRACE,   /* } */
+        TOKEN_TYPE_LEFT_PAREN,    /* ( */
+        TOKEN_TYPE_RIGHT_PAREN,   /* ) */
+
         TOKEN_TYPE_EOS = EOF
 
     } token_type_t;

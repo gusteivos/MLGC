@@ -2,76 +2,6 @@
 #include "util.h"
 
 
-static void lexer_update_source_location(lexer_t *lexer)
-{
-
-    abort_if_null((void *)lexer);
-
-    switch (lexer->source_char)
-    {
-
-    case '\n':
-
-        lexer->source_location.line++;
-
-        lexer->source_location.column  = 1;
-
-        break;
-
-    case '\t':
-
-        lexer->source_location.column += LEXER_TAB_WIDTH;
-
-        break;
-
-    default:
-
-        lexer->source_location.column += 1;
-
-        break;
-
-    }
-
-}
-
-static void lexer_next_char(lexer_t *lexer)
-{
-
-    abort_if_null((void *)lexer);
-
-    if (lexer->source_location.index < lexer->source_length)
-    {
-
-        lexer->source_location.index++;
-
-        lexer->source_char = lexer->source[lexer->source_location.index];
-
-        lexer_update_source_location(lexer);
-
-    }
-
-}
-
-static void lexer_peek_char(lexer_t *lexer, size_t offset)
-{
-
-    abort_if_null((void *)lexer);
-
-    size_t peek_index = lexer->source_location.index + offset;
-
-    if (peek_index >= lexer->source_length)
-    {
-
-        lexer->source_char = '\0';
-
-        return;
-    }
-
-    lexer->source_char = lexer->source[peek_index];
-
-}
-
-
 lexer_t *create_lexer(char *source, size_t source_length)
 {
 
@@ -133,15 +63,42 @@ token_t *lexer_lex(lexer_t *lexer)
     do
     {
 
+        lexer_skip_chars_considered_whitespace(lexer);
+
         token->location = lexer->source_location;
 
         switch (lexer->source_char)
         {
 
+        case '[':
+            token->type = TOKEN_TYPE_LEFT_BRACKET;
+            break;
+        case ']':
+            token->type = TOKEN_TYPE_RIGHT_BRACKET;
+            break;
+        case '{':
+            token->type = TOKEN_TYPE_LEFT_BRACE;
+            break;
+        case '}':
+            token->type = TOKEN_TYPE_RIGHT_BRACE;
+            break;
+        case '(':
+            token->type = TOKEN_TYPE_LEFT_PAREN;
+            break;
+        case ')':
+            token->type = TOKEN_TYPE_RIGHT_PAREN;
+            break;
+
         case '\0':
-
             token->type = TOKEN_TYPE_EOS;
+            break;
 
+        default:
+            {
+
+                return token;
+
+            }
             break;
 
         }
@@ -190,5 +147,109 @@ bool destroy_lexer(lexer_t *lexer)
     free(lexer);
 
     return true;
+
+}
+
+
+void lexer_update_source_location(lexer_t *lexer)
+{
+
+    abort_if_null((void *)lexer);
+
+    switch (lexer->source_char)
+    {
+
+    case '\n':
+
+        lexer->source_location.line++;
+
+        lexer->source_location.column  = 1;
+
+        break;
+
+    case '\t':
+
+        lexer->source_location.column += LEXER_TAB_WIDTH;
+
+        break;
+
+    default:
+
+        lexer->source_location.column += 1;
+
+        break;
+
+    }
+
+}
+
+void lexer_next_char(lexer_t *lexer)
+{
+
+    abort_if_null((void *)lexer);
+
+    if (lexer->source_location.index < lexer->source_length)
+    {
+
+        lexer->source_location.index++;
+
+        if (lexer->source_location.index >= lexer->source_length)
+        {
+
+            lexer->source_char = '\0';
+
+        }
+        else
+        {
+
+            lexer->source_char = lexer->source[lexer->source_location.index];
+
+        }
+
+        lexer_update_source_location(lexer);
+
+    }
+    else
+    {
+
+        lexer->source_char = '\0';
+
+    }
+
+}
+
+void lexer_peek_char(lexer_t *lexer, size_t offset)
+{
+
+    abort_if_null((void *)lexer);
+
+    size_t peek_index = lexer->source_location.index + offset;
+
+    if (peek_index >= lexer->source_length)
+    {
+
+        lexer->source_char = '\0';
+
+    }
+    else
+    {
+
+        lexer->source_char = lexer->source[peek_index];
+
+    }
+
+}
+
+void lexer_skip_chars_considered_whitespace(lexer_t *lexer)
+{
+
+    abort_if_null((void *)lexer);
+
+    while (lexer->source_char && strchr(LEXER_CHARS_CONSIDERED_WHITESPACE, (int)lexer->source_char))
+    {
+
+        lexer_next_char(lexer);
+
+    }
 
 }

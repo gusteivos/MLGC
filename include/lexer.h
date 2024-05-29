@@ -41,6 +41,7 @@
 
     } lexer_t;
 
+
     /**
      * Creates and initializes a new lexer with the provided source and source length.
      * If the source length is not provided, it uses strlen to determine the length.
@@ -90,5 +91,14 @@
      * @return true if the lexer is successfully destroyed, false otherwise.
      */
     bool destroy_lexer(lexer_t *lexer);
+
+
+    void lexer_update_source_location(lexer_t *lexer);
+
+    void lexer_next_char(lexer_t *lexer);
+
+    void lexer_peek_char(lexer_t *lexer, size_t offset);
+
+    void lexer_skip_chars_considered_whitespace(lexer_t *lexer);
 
 #endif /* _MLG_LEXER_H_ */

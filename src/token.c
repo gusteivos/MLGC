@@ -10,6 +10,13 @@ char *token_type_to_string(token_type_t type)
 
     case TOKEN_TYPE_INVALID: return "INVALID";
 
+    case TOKEN_TYPE_LEFT_BRACKET: return "LEFT BRACKET";
+    case TOKEN_TYPE_RIGHT_BRACKET: return "RIGHT BRACKET";
+    case TOKEN_TYPE_LEFT_BRACE: return "LEFT BRACE";
+    case TOKEN_TYPE_RIGHT_BRACE: return "RIGHT BRACE";
+    case TOKEN_TYPE_LEFT_PAREN: return "LEFT PAREN";
+    case TOKEN_TYPE_RIGHT_PAREN: return "RIGHT PAREN";
+
     case TOKEN_TYPE_EOS: return "END OF SOURCE";
 
     default: return "UNKNOWN";

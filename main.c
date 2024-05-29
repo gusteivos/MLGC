@@ -48,6 +48,13 @@ int main(int argc, char *argv[])
 
         print_token(token, true);
 
+        if (token->type == TOKEN_TYPE_INVALID)
+        {
+
+            lexer_next_char(lexer);
+
+        }
+
     } 
     while (token != NULL && token->type != TOKEN_TYPE_EOS);
 
