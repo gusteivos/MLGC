@@ -101,4 +101,8 @@
 
     void lexer_skip_chars_considered_whitespace(lexer_t *lexer);
 
+    token_t *lexer_lex2(lexer_t *lexer, token_t *token);
+
+    token_t *lexer_lex3(lexer_t *lexer, token_t *token);
+
 #endif /* _MLG_LEXER_H_ */

@@ -13,6 +13,11 @@
 
         TOKEN_TYPE_INVALID = 0,
 
+        TOKEN_TYPE_DOT,
+        TOKEN_TYPE_COMMA,
+        TOKEN_TYPE_COLON,
+        TOKEN_TYPE_SEMICOLON,
+
         TOKEN_TYPE_LEFT_BRACKET,  /* [ */
         TOKEN_TYPE_RIGHT_BRACKET, /* ] */
         TOKEN_TYPE_LEFT_BRACE,    /* { */
