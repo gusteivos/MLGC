@@ -37,14 +37,16 @@ uint32_t fnv1a_string(const char *str)
 
 }
 
-void abort_if_null(void *p)
+void abort_if_null_function_line(void *p, const char *file, int line)
 {
 
     if (p == NULL)
     {
     
+        fprintf(stderr, "Aborting NULL pointer detected in function %s, on line %d.\n", file, line);
+    
         abort();
-
+    
     }
 
 }

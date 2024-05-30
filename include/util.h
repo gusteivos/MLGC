@@ -3,6 +3,7 @@
 
     #include <stdint.h>
     #include <stdlib.h>
+    #include <stdio.h>
     #include <string.h>
 
 
@@ -34,12 +35,16 @@
     uint32_t fnv1a_string(const char *str);
 
     /**
-     * Checks if the given pointer is null.
-     * If it is null, calls abort().
+     * @brief Checks if a pointer is null and aborts the program if it is.
      *
-     * @param p The pointer to check.
+     * This function prints an error message containing the function name and line number
+     * where the check was performed, before aborting the program.
+     *
+     * @param p The pointer to be checked.
+     * @param function The name of the function where the check was performed.
+     * @param line The line number where the check was performed.
      */
-    void abort_if_null(void *p);
+    void abort_if_null_function_line(void *p, const char *file, int line);
 
     /**
      * Allocates memory of the specified size.
@@ -78,5 +83,14 @@
      * @return A pointer to the duplicated string.
      */
     char *a_duplicate_string(const char *s);
+
+
+    /**
+     * Checks if the given pointer is null.
+     * If it is null, calls abort().
+     *
+     * @param p The pointer to check.
+     */
+    #define abort_if_null(p) abort_if_null_function_line(p, __FUNCTION__, __LINE__)
 
 #endif /* _MLG_UTIL_H_ */
