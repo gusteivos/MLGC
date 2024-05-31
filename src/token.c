@@ -10,6 +10,23 @@ char *token_type_to_string(token_type_t type)
 
     case TOKEN_TYPE_INVALID: return "INVALID";
 
+    case TOKEN_TYPE_IDENTIFIER: return "IDENTIFIER";
+
+    case TOKEN_TYPE_PLUS: return "PLUS";            /* + */
+    case TOKEN_TYPE_MINUS: return "MINUS";          /* - */
+    case TOKEN_TYPE_ASTERISK: return "ASTERISK";    /* * */
+    case TOKEN_TYPE_SLASH: return "SLASH";          /* / */
+    case TOKEN_TYPE_PERCENT: return "PERCENT";      /* % */
+    case TOKEN_TYPE_CARET: return "CARET";          /* ^ */
+    case TOKEN_TYPE_EXCLAMATION: return "EXCLAMATION"; /* ! */
+    case TOKEN_TYPE_EQUAL: return "EQUAL";          /* = */
+    case TOKEN_TYPE_TILDE: return "TILDE";          /* ~ */
+
+    case TOKEN_TYPE_DOT: return "DOT";
+    case TOKEN_TYPE_COMMA: return "COMMA";
+    case TOKEN_TYPE_COLON: return "COLON";
+    case TOKEN_TYPE_SEMICOLON: return "SEMICOLON";
+
     case TOKEN_TYPE_LEFT_BRACKET: return "LEFT BRACKET";
     case TOKEN_TYPE_RIGHT_BRACKET: return "RIGHT BRACKET";
     case TOKEN_TYPE_LEFT_BRACE: return "LEFT BRACE";

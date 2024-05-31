@@ -11,12 +11,12 @@
     #include "token.h"
 
 
-    #ifndef LEXER_PARSE_ALPHA_SEQUENCE_OTHERS
-    #define LEXER_PARSE_ALPHA_SEQUENCE_OTHERS "_1234567890"
+    #ifndef LEXER_PARSE_IDENTIFIER_OTHERS
+    #define LEXER_PARSE_IDENTIFIER_OTHERS "_1234567890"
     #endif
 
     #ifndef LEXER_PARSE_DIGIT_SEQUENCE_OTHERS
-    #define LEXER_PARSE_DIGIT_SEQUENCE_OTHERS "bho."
+    #define LEXER_PARSE_DIGIT_SEQUENCE_OTHERS "bho.abcdefABCDEF"
     #endif
 
     #ifndef LEXER_CHARS_CONSIDERED_WHITESPACE
@@ -104,5 +104,9 @@
     token_t *lexer_lex2(lexer_t *lexer, token_t *token);
 
     token_t *lexer_lex3(lexer_t *lexer, token_t *token);
+
+    char *lexer_parse_sequence(lexer_t *lexer, int (* char_rule)(int), char *others);
+
+    char *lexer_parse_identifier(lexer_t *lexer);
 
 #endif /* _MLG_LEXER_H_ */

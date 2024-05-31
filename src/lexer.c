@@ -77,7 +77,22 @@ token_t *lexer_lex(lexer_t *lexer)
         default:
             {
 
-                return token;
+                char *token_value = NULL;
+
+                if ((token_value = lexer_parse_identifier(lexer)))
+                {
+
+                    token->type = TOKEN_TYPE_IDENTIFIER;
+
+                    token->value = token_value;
+
+                }
+                else
+                {
+                
+                    return token;
+                
+                }
 
             }
             break;
@@ -92,7 +107,7 @@ token_t *lexer_lex(lexer_t *lexer)
         case '=':
             return lexer_lex2(lexer, token);
         case '~':
-            /* TODO: */
+            token->type = TOKEN_TYPE_TILDE;
             break;
 
         case '<':
@@ -297,5 +312,51 @@ token_t *lexer_lex3(lexer_t *lexer, token_t *token)
     /* TODO: */
 
     return token;
+
+}
+
+char *lexer_parse_sequence(lexer_t *lexer, int (* char_rule)(int), char *others)
+{
+
+    char *str = NULL;
+
+    size_t str_len = 0;
+
+    while
+    (
+        lexer->source_char != '\0' &&
+        char_rule((int)lexer->source_char) ||
+        (str_len != 0 && strchr(others, (int)lexer->source_char))
+    )
+    {
+
+        str = (char *)a_realloc(str, (str_len + 1) * sizeof(char));
+
+        str[str_len++] = lexer->source_char;
+
+        lexer_next_char(lexer);
+
+    }
+
+    if (str != NULL)
+    {
+
+        str[str_len] = '\0'; 
+
+    }
+
+    return str;
+
+}
+
+char *lexer_parse_identifier(lexer_t *lexer)
+{
+
+    return lexer_parse_sequence
+    (
+        lexer,
+        isalpha,
+        LEXER_PARSE_IDENTIFIER_OTHERS
+    );
 
 }

@@ -13,6 +13,18 @@
 
         TOKEN_TYPE_INVALID = 0,
 
+        TOKEN_TYPE_IDENTIFIER,
+
+        TOKEN_TYPE_PLUS,        /* + */
+        TOKEN_TYPE_MINUS,       /* - */
+        TOKEN_TYPE_ASTERISK,    /* * */
+        TOKEN_TYPE_SLASH,       /* / */
+        TOKEN_TYPE_PERCENT,     /* % */
+        TOKEN_TYPE_CARET,       /* ^ */
+        TOKEN_TYPE_EXCLAMATION, /* ! */
+        TOKEN_TYPE_EQUAL,       /* = */
+        TOKEN_TYPE_TILDE,       /* ~ */
+
         TOKEN_TYPE_DOT,
         TOKEN_TYPE_COMMA,
         TOKEN_TYPE_COLON,
