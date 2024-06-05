@@ -11,12 +11,12 @@
     #include "token.h"
 
 
-    #ifndef LEXER_PARSE_IDENTIFIER_OTHERS
-    #define LEXER_PARSE_IDENTIFIER_OTHERS "_1234567890"
+    #ifndef LEXER_PARSE_CHAR_SEQUENCE_OTHERS
+    #define LEXER_PARSE_CHAR_SEQUENCE_OTHERS "_1234567890"
     #endif
 
     #ifndef LEXER_PARSE_DIGIT_SEQUENCE_OTHERS
-    #define LEXER_PARSE_DIGIT_SEQUENCE_OTHERS "bho.abcdefABCDEF"
+    #define LEXER_PARSE_DIGIT_SEQUENCE_OTHERS "bhoBHO.abcdefABCDEF"
     #endif
 
     #ifndef LEXER_CHARS_CONSIDERED_WHITESPACE
@@ -95,18 +95,26 @@
 
     void lexer_update_source_location(lexer_t *lexer);
 
+    void lexer_current_char(lexer_t *lexer);
+
     void lexer_next_char(lexer_t *lexer);
 
     void lexer_peek_char(lexer_t *lexer, size_t offset);
 
     void lexer_skip_chars_considered_whitespace(lexer_t *lexer);
 
+    void lexer_skip_line(lexer_t *lexer);
+
+
     token_t *lexer_lex2(lexer_t *lexer, token_t *token);
 
     token_t *lexer_lex3(lexer_t *lexer, token_t *token);
 
-    char *lexer_parse_sequence(lexer_t *lexer, int (* char_rule)(int), char *others);
 
-    char *lexer_parse_identifier(lexer_t *lexer);
+    char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length);
+
+    bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token);
+
+    bool lexer_parse_digit_sequence(lexer_t *lexer, token_t *token);
 
 #endif /* _MLG_LEXER_H_ */

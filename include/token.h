@@ -15,6 +15,11 @@
 
         TOKEN_TYPE_IDENTIFIER,
 
+        TOKEN_TYPE_LITERAL_NUMBER,
+
+        TOKEN_TYPE_KEYWORD_VARIABLE,
+        TOKEN_TYPE_KEYWORD_FUNCTION,
+
         TOKEN_TYPE_PLUS,        /* + */
         TOKEN_TYPE_MINUS,       /* - */
         TOKEN_TYPE_ASTERISK,    /* * */
@@ -24,6 +29,35 @@
         TOKEN_TYPE_EXCLAMATION, /* ! */
         TOKEN_TYPE_EQUAL,       /* = */
         TOKEN_TYPE_TILDE,       /* ~ */
+
+        TOKEN_TYPE_PLUS_EQUAL,
+        TOKEN_TYPE_MINUS_EQUAL,
+        TOKEN_TYPE_ASTERISK_EQUAL,
+        TOKEN_TYPE_SLASH_EQUAL,
+        TOKEN_TYPE_PERCENT_EQUAL,
+        TOKEN_TYPE_CARET_EQUAL,
+        TOKEN_TYPE_EXCLAMATION_EQUAL,
+        TOKEN_TYPE_EQUAL_EQUAL,
+
+        TOKEN_TYPE_LESS_THAN,    /* < */
+        TOKEN_TYPE_GREATER_THAN, /* > */
+        TOKEN_TYPE_AMPERSAND,    /* & */
+        TOKEN_TYPE_PIPE,         /* | */
+
+        TOKEN_TYPE_LEFT_SHIFT,
+        TOKEN_TYPE_RIGHT_SHIFT,
+        TOKEN_TYPE_LOGICAL_AND,
+        TOKEN_TYPE_LOGICAL_OR,
+
+        TOKEN_TYPE_LESS_THAN_EQUAL,
+        TOKEN_TYPE_GREATER_THAN_EQUAL,
+        TOKEN_TYPE_AMPERSAND_EQUAL,
+        TOKEN_TYPE_PIPE_EQUAL,
+
+        TOKEN_TYPE_LEFT_SHIFT_EQUAL,
+        TOKEN_TYPE_RIGHT_SHIFT_EQUAL,
+        TOKEN_TYPE_LOGICAL_AND_EQUAL,
+        TOKEN_TYPE_LOGICAL_OR_EQUAL,
 
         TOKEN_TYPE_DOT,
         TOKEN_TYPE_COMMA,
@@ -97,5 +131,38 @@
      * @return true if the token is valid and destruction is successful, false otherwise.
      */
     bool destroy_token(token_t *token);
+
+    typedef struct token_mapping_s
+    {
+
+        token_type_t type;
+
+        char *value0;
+
+        char *value1;
+
+    } token_mapping_t;
+
+    /**
+     * Maps a token type to a token mapping value.
+     *
+     * @param token The token to be mapped.
+     * @param token_mapping The token mapping to be used.
+     * @param mapped Pointer to a boolean indicating whether the mapping was successful.
+     * @param use_value If true, the token's value will be updated.
+     * @return true if the operation is successful, false otherwise.
+     */
+    bool token_type_token_mapping_value(token_t *token, token_mapping_t *token_mapping, bool *mapped, bool use_value);
+
+    /**
+     * Maps a token value to a token type based on a token mapping.
+     *
+     * @param token_mapping The token mapping to be used.
+     * @param token The token to be mapped.
+     * @param mapped Pointer to a boolean indicating whether the mapping was successful.
+     * @param use_value If true, the token's value will be updated.
+     * @return true if the operation is successful, false otherwise.
+     */
+    bool token_mapping_value_token_type(token_mapping_t *token_mapping, token_t *token, bool *mapped, bool use_value);
 
 #endif /* _MLG_TOKEN_H_ */
