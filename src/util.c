@@ -3,16 +3,16 @@
 
 uint32_t djb2_string(const char *str)
 {
-    
+
     uint32_t hash = 5381;
-    
+
     int c;
 
     while ((c = *str++))
     {
-    
+
         hash = ((hash << 5) + hash) + c;
-    
+
     }
 
     return hash;
@@ -26,27 +26,27 @@ uint32_t fnv1a_string(const char *str)
 
     while (*str)
     {
-    
+
         hash ^= (uint8_t)(*str++);
-    
+
         hash *= FNV_PRIME;
-    
+
     }
-    
+
     return hash;
 
 }
 
-void abort_if_null_function_line(void *p, const char *file, int line)
+void abort_if_null_function_line(void *p, const char *func, int line)
 {
 
     if (p == NULL)
     {
-    
-        fprintf(stderr, "Aborting NULL pointer detected in function %s, on line %d.\n", file, line);
-    
+
+        fprintf(stderr, "Aborting NULL pointer detected in function %s, on line %d.\n", func, line);
+
         abort();
-    
+
     }
 
 }
@@ -57,7 +57,7 @@ void *a_alloc(size_t s)
     void *ptr = malloc(s);
 
     abort_if_null(ptr);
-    
+
     return ptr;
 
 }
@@ -82,7 +82,7 @@ void *a_realloc(void *p, size_t s)
         return a_alloc(s);
 
     }
-    
+
     void *ptr = realloc(p, s);;
 
     abort_if_null(ptr);
@@ -103,5 +103,41 @@ char *a_duplicate_string(const char *s)
     strcpy(dup, s);
 
     return dup;
+
+}
+
+void err_function_line(const char *func, int line, const char *fmt, ...)
+{
+
+	va_list ap;
+
+    fprintf(stderr, "\033[31mError on func %s, on line %d:\033[0m\n", func, line);
+
+    va_start(ap, fmt);
+
+    vfprintf(stderr, fmt, ap);
+
+    va_end(ap);
+
+    putc('\n', stderr);
+
+	exit(EXIT_FAILURE);
+
+}
+
+void war_function_line(const char *func, int line, const char *fmt, ...)
+{
+
+	va_list ap;
+
+    fprintf(stdout, "\033[33mWarning on func %s, on line %d:\033[0m\n", func, line);
+
+    va_start(ap, fmt);
+
+    vfprintf(stdout, fmt, ap);
+
+    va_end(ap);
+
+    putc('\n', stdout);
 
 }

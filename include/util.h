@@ -5,6 +5,7 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
+    #include <stdarg.h>
 
 
     /**
@@ -44,7 +45,7 @@
      * @param function The name of the function where the check was performed.
      * @param line The line number where the check was performed.
      */
-    void abort_if_null_function_line(void *p, const char *file, int line);
+    void abort_if_null_function_line(void *p, const char *func, int line);
 
     /**
      * Allocates memory of the specified size.
@@ -84,6 +85,10 @@
      */
     char *a_duplicate_string(const char *s);
 
+    void err_function_line(const char *func, int line, const char *fmt, ...);
+
+    void war_function_line(const char *func, int line, const char *fmt, ...);
+
 
     /**
      * Checks if the given pointer is null.
@@ -92,5 +97,9 @@
      * @param p The pointer to check.
      */
     #define abort_if_null(p) abort_if_null_function_line(p, __FUNCTION__, __LINE__)
+
+    #define err(fmt, ...) err_function_line(__FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
+
+    #define war(fmt, ...) war_function_line(__FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 
 #endif /* _MLG_UTIL_H_ */

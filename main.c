@@ -23,16 +23,16 @@ int main(int argc, char *argv[])
     }
 
     size_t source_file_content_size = 0;
-    
+
     char *source_file_content = load_text_file(source_file_path, &source_file_content_size);
-    
+
     if (!source_file_content)
     {
-    
+
         fprintf(stderr, "Failed to load source file: %s\n", source_file_path);
-    
+
         return EXIT_FAILURE;
-    
+
     }
 
     printf("%s", source_file_content);
@@ -48,6 +48,8 @@ int main(int argc, char *argv[])
 
         print_token(token, true);
 
+        putc('\n', stdout);
+
         if (token->type == TOKEN_TYPE_INVALID)
         {
 
@@ -55,7 +57,7 @@ int main(int argc, char *argv[])
 
         }
 
-    } 
+    }
     while (token != NULL && token->type != TOKEN_TYPE_EOS);
 
     return EXIT_SUCCESS;
