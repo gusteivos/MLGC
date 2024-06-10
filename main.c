@@ -1,7 +1,196 @@
 #include "main.h"
 
 
+void shift_argc_argv(int *argc, char **argv[])
+{
+
+    assert(!argc && *argc > 0);
+
+    ++*argv;
+
+    --*argc;
+
+}
+
 int main(int argc, char *argv[])
+{
+
+    #ifndef NDEBUG
+
+    return debug_main(argc, argv);
+
+    #endif
+
+    char *name = argv[0];
+
+    if (argc < MIN_ARG_C)
+    {
+
+        usage(name, true, EXIT_FAILURE);
+
+        return EXIT_FAILURE;
+
+    }
+
+    shift_argc_argv(&argc, &argv);
+
+    char *output_file_name = NULL;
+
+    size_t input_files_count = 0;
+
+    char **input_files       = NULL;
+
+    bool single_file_mode = false;
+
+    while (argc > 0)
+    {
+
+        char *value = argv[0];
+
+        if
+        (
+            !strcmp((const char *)value, "-h"    ) ||
+            !strcmp((const char *)value, "--help")
+        )
+        {
+
+            usage(name, false, EXIT_SUCCESS);
+
+            continue;
+
+        }
+
+        if
+        (
+            !strcmp((const char *)value, "-s"    )
+        )
+        {
+
+            if (single_file_mode)
+            {
+
+                war(
+                    "\tSingle file mode is already enabled.\n"
+                   );
+
+            }
+
+            single_file_mode = true;
+
+            shift_argc_argv(&argc, &argv);
+        
+            continue;
+        
+        }
+
+        if
+        (
+            !strcmp((const char *)value, "-o"    )
+        )
+        {
+
+            shift_argc_argv(&argc, &argv);
+
+            if (argc > 0)
+            {
+    
+                if (output_file_name)
+                {
+                
+                    war(
+                        "\tOutput file name already specified,\n"
+                        "\tOverwriting the previous one.\n"
+                    );
+
+                    free(output_file_name);
+                
+                }
+
+                output_file_name = a_duplicate_string(argv[0]);
+
+            }
+            else
+            {
+
+                war("\tOutput file name not specified after -o option.\n");
+
+                usage(name, true, EXIT_FAILURE);
+
+            }
+
+            shift_argc_argv(&argc, &argv);
+            
+            continue;
+
+        }
+
+        input_files = a_realloc(input_files, (input_files_count + 1) * sizeof(char *));
+        
+        input_files[input_files_count] = a_duplicate_string(value);
+        
+        input_files_count++;
+
+        shift_argc_argv(&argc, &argv);
+    
+    }
+
+    if (single_file_mode && input_files_count > 1)
+    {
+
+        err(
+            "\tSingle-file mode requires exactly one input file.\n"
+            "\tMultiple files provided.\n"
+           );
+
+        return EXIT_FAILURE;
+
+    }
+
+    /* TODO: lex parse visit emit compile */
+
+    return EXIT_SUCCESS;
+
+}
+
+void usage(char *name, bool show_help, int exit_status)
+{
+    
+    printf
+    (
+        "\n"
+        "\t%sUsage: %s\n",
+        (name) ? "" : "Try ",
+        (name) ? name : NAME
+    );
+
+    printf
+    (
+        "\t\t-s                    Set single file mode\n"
+        "\t\t-o <file>             Specify output file name\n"
+    );
+
+if (show_help)
+{
+
+    printf
+    (
+        "\t\t-h, --help            Output this help information\n"
+    );
+   
+}
+
+    printf
+    (
+        "\n"
+        "\t\tAny other arguments are interpreted as input files.\n"
+        "\n"
+    );    
+
+    exit(exit_status);
+
+}
+
+int debug_main(int argc, char *argv[])
 {
 
     char *source_file_path = "./mlg.mlg";
