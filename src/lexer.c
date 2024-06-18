@@ -183,7 +183,11 @@ token_t *lexer_lex(lexer_t *lexer)
 
                 fprint_location(stderr, &lexer->source_location);
 
-                err("\tWhen lexing invalid char \'%c\'.\n", lexer->source_char);
+                char str[] = { '\0', '\0', '\0', '\0', '\0' };
+
+                size_t utf8_encode_size = utf8_encode(str, sizeof(str), lexer->source_char);
+
+                err("\tWhen lexing invalid char \'%s\'.\n", utf8_encode_size ? str : "invalid and not encodable char");
 
             }
             break;
@@ -241,6 +245,8 @@ bool destroy_lexer(lexer_t *lexer)
 void lexer_update_source_location(lexer_t *lexer)
 {
 
+    abort_if_null(lexer);
+
     switch (lexer->source_char)
     {
 
@@ -255,6 +261,10 @@ void lexer_update_source_location(lexer_t *lexer)
     case '\t':
 
         lexer->source_location.column += LEXER_TAB_WIDTH;
+        /*
+        TODO:
+            lexer->source_location.column += lexer->tab_width;
+        */
 
         break;
 
@@ -268,49 +278,82 @@ void lexer_update_source_location(lexer_t *lexer)
 
 }
 
+void lexer_current_char_index(lexer_t *lexer, size_t index)
+{
+
+    abort_if_null(lexer);
+
+    char *source_index = lexer->source + index;
+
+    if (index >= lexer->source_length)
+    {
+
+        lexer->source_char_size = 1;
+
+        lexer->source_char = '\0';
+
+        return;
+
+    }
+
+    size_t source_len = lexer->source_length - lexer->source_location.index + 1;
+
+    lexer->source_char_size = utf8_decode(&lexer->source_char, source_index, source_len);
+
+    if (lexer->source_char_size == 0)
+    {
+
+        fprint_location(stderr, &lexer->source_location);
+
+        err("\tWhen lexing encoding not compatible with utf8.\n");
+
+    }
+
+}
+
 void lexer_current_char(lexer_t *lexer)
 {
 
-    lexer->source_char = (lexer->source_location.index < lexer->source_length) ?
-                         lexer->source[lexer->source_location.index] : '\0';
+    abort_if_null(lexer);
+
+    lexer_current_char_index(lexer, lexer->source_location.index);
 
 }
 
 void lexer_next_char(lexer_t *lexer)
 {
 
+    abort_if_null(lexer);
+
     if (lexer->source_location.index < lexer->source_length)
     {
 
-        lexer->source_location.index++;
-
-        lexer_current_char(lexer);
-
-        lexer_update_source_location(lexer);
+        lexer->source_location.index += lexer->source_char_size;
 
     }
-    else
-    {
 
-        lexer->source_char = '\0';
+    lexer_current_char(lexer);
 
-    }
+    lexer_update_source_location(lexer);
 
 }
 
 void lexer_peek_char(lexer_t *lexer, size_t offset)
 {
 
+    abort_if_null(lexer);
+
     size_t peek_index = lexer->source_location.index + offset;
 
-    lexer->source_char = (peek_index < lexer->source_length) ?
-                         lexer->source[peek_index] : '\0';
+    lexer_current_char_index(lexer, peek_index);
 
 }
 
 
 void lexer_skip_line(lexer_t *lexer)
 {
+
+    abort_if_null(lexer);
 
     size_t line = lexer->source_location.line;
 
@@ -330,10 +373,16 @@ void lexer_skip_line(lexer_t *lexer)
 void lexer_skip_chars_considered_whitespace(lexer_t *lexer)
 {
 
+    abort_if_null(lexer);
+
     while
     (
         lexer->source_char &&
-        strchr(LEXER_CHARS_CONSIDERED_WHITESPACE, (int)lexer->source_char)
+        utf8_strchr(LEXER_CHARS_CONSIDERED_WHITESPACE, lexer->source_char)
+        /*
+        TODO:
+            utf8_strchr(lexer->chars_considered_whitespace, lexer->source_char)
+        */
     )
     {
 
@@ -643,14 +692,18 @@ char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, 
     while (
         lexer->source_char != '\0' &&
         (char_rule((int)lexer->source_char) ||
-        (str_len != 0 && strchr(others, (int)lexer->source_char))) &&
+        (str_len != 0 && utf8_strchr((const char *)others, lexer->source_char))) &&
         str_len < max_length
     )
     {
 
-        str = (char *)a_realloc(str, (str_len + 1) * sizeof(char));
+        str = (char *)a_realloc(str, (str_len + lexer->source_char_size) * sizeof(char));
 
-        str[str_len++] = lexer->source_char;
+        char *source_index = str + str_len;
+
+        utf8_encode(source_index, lexer->source_char_size, lexer->source_char);
+
+        str_len += lexer->source_char_size;
 
         lexer_next_char(lexer);
 

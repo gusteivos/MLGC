@@ -43,6 +43,8 @@ void abort_if_null_function_line(void *p, const char *func, int line)
     if (p == NULL)
     {
 
+        fflush(stderr);
+
         fprintf(stderr, "Aborting NULL pointer detected in function %s, on line %d.\n", func, line);
 
         abort();

@@ -9,6 +9,7 @@
     #include <ctype.h>
     #include "location.h"
     #include "token.h"
+    #include "utf8.h"
 
 
     #ifndef LEXER_PARSE_CHAR_SEQUENCE_OTHERS
@@ -37,7 +38,9 @@
 
         location_t source_location;
 
-        char source_char;
+        uint32_t source_char;
+
+        size_t source_char_size;
 
     } lexer_t;
 
@@ -95,11 +98,14 @@
 
     void lexer_update_source_location(lexer_t *lexer);
 
+    void lexer_current_char_index(lexer_t *lexer, size_t index);
+
     void lexer_current_char(lexer_t *lexer);
 
     void lexer_next_char(lexer_t *lexer);
 
     void lexer_peek_char(lexer_t *lexer, size_t offset);
+
 
     void lexer_skip_chars_considered_whitespace(lexer_t *lexer);
 
