@@ -7,6 +7,23 @@ token_mapping_t lexer_token_keyword_mappings[] =
 
     { TOKEN_TYPE_KEYWORD_VARIABLE, "var" , "variable" },
     { TOKEN_TYPE_KEYWORD_FUNCTION, "func", "function" },
+
+    { TOKEN_TYPE_KEYWORD_VOID , "void" , NULL },
+
+    { TOKEN_TYPE_KEYWORD_INT8 , "byte" , "int8"  },
+    { TOKEN_TYPE_KEYWORD_INT16, "short", "int16" },
+    { TOKEN_TYPE_KEYWORD_INT32, "int"  , "int32" },
+    { TOKEN_TYPE_KEYWORD_INT64, "long" , "int64" },
+
+    { TOKEN_TYPE_KEYWORD_FLOAT32, "single", "float32" },
+    { TOKEN_TYPE_KEYWORD_FLOAT64, "double", "float64" },
+
+    { TOKEN_TYPE_KEYWORD_SIGNED  , "signed"  , NULL },
+    { TOKEN_TYPE_KEYWORD_UNSIGNED, "unsigned", NULL },
+
+    { TOKEN_TYPE_KEYWORD_SIZEOF, "sizeof", NULL },
+    { TOKEN_TYPE_KEYWORD_KINDOF, "kindof", NULL },
+
     { TOKEN_TYPE_EOS, NULL, NULL }
 
 };
@@ -75,6 +92,8 @@ token_t *lexer_lex(lexer_t *lexer)
 
     }
 
+    bool exit = false;
+
     token_t *token = create_token(TOKEN_TYPE_INVALID, NULL, (location_t){ 0, 0, 0 });
 
     do
@@ -98,25 +117,57 @@ token_t *lexer_lex(lexer_t *lexer)
 
         }
 
-        if (lexer->source_char == '#')
+        if (lexer->source_char == '@') /*TODO: make a function for it.*/
         {
 
-            lexer_skip_line(lexer);
+            lexer_peek_char(lexer, 1);
 
-            continue;
+            if (lexer->source_char == '#')
+            {
 
-        }
+                lexer_next_char(lexer);
 
-        if (lexer->source_char == '$')
-        {
+                lexer_next_char(lexer);
 
-            fprint_location(stderr, &lexer->source_location);
+                while (lexer->source_char != '\0')
+                {
 
-            war("\tLine for preprocessor not processed, skipping the line.\n");
+                    if (lexer->source_char == '#')
+                    {
 
-            lexer_skip_line(lexer);
+                        lexer_peek_char(lexer, 1);
 
-            continue;
+                        if (lexer->source_char == '@')
+                        {
+
+                            lexer_next_char(lexer);
+
+                            lexer_next_char(lexer);
+
+                            break;
+
+                        }
+
+                    }
+
+                    lexer_next_char(lexer);
+
+                }
+
+                if    (lexer->source_char == '\0')
+                {
+
+                    fprint_location(stderr, &lexer->source_location);
+
+                    err("\tTODO: .\n");
+
+                }
+
+                continue;
+
+            }
+
+            lexer_current_char(lexer);
 
         }
 
@@ -174,6 +225,22 @@ token_t *lexer_lex(lexer_t *lexer)
             token->type = TOKEN_TYPE_RIGHT_PAREN;
             break;
 
+        case '#':
+            lexer_skip_line(lexer);
+            continue;
+
+        case '$':
+            {
+
+                fprint_location(stderr, &lexer->source_location);
+
+                war("\tLine for preprocessor not processed, skipping the line.\n");
+
+                lexer_skip_line(lexer);
+
+            }
+            continue;
+
         case '\0':
             token->type = TOKEN_TYPE_EOS;
             break;
@@ -187,18 +254,69 @@ token_t *lexer_lex(lexer_t *lexer)
 
                 size_t utf8_encode_size = utf8_encode(str, sizeof(str), lexer->source_char);
 
+                if (utf8_encode_size == 0)
+                {
+
+                    /* TODO: .*/
+
+                }
+
                 err("\tWhen lexing invalid char \'%s\'.\n", utf8_encode_size ? str : "invalid and not encodable char");
 
+                exit = true;
+
             }
-            break;
+            continue;
 
         }
 
         lexer_next_char(lexer);
 
-    } while (token->type == TOKEN_TYPE_INVALID);
+    } while (token->type == TOKEN_TYPE_INVALID && !exit);
 
     return token;
+
+}
+
+bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
+{
+
+    abort_if_null(lexer);
+
+    abort_if_null(tokens_count);
+
+    token_t *token = NULL;
+
+    do
+    {
+
+        token = lexer_lex(lexer);
+
+        if (!token)
+        {
+
+            err("\tTODO: .\n");
+
+        }
+
+        (*tokens_count)++;
+
+        token_t **new_tokens = (token_t **)a_realloc(*tokens, *tokens_count * sizeof(token_t *));
+
+        *tokens = new_tokens;
+
+        (*tokens)[*tokens_count - 1] = token;
+
+        if (token->type == TOKEN_TYPE_INVALID)
+        {
+
+            return false;
+
+        }
+
+    } while (token && token->type != TOKEN_TYPE_EOS);
+
+    return true;
 
 }
 
@@ -283,7 +401,7 @@ void lexer_current_char_index(lexer_t *lexer, size_t index)
 
     abort_if_null(lexer);
 
-    char *source_index = lexer->source + index;
+    char *source_index = (char *)&lexer->source[index];
 
     if (index >= lexer->source_length)
     {
@@ -296,7 +414,7 @@ void lexer_current_char_index(lexer_t *lexer, size_t index)
 
     }
 
-    size_t source_len = lexer->source_length - lexer->source_location.index + 1;
+    size_t source_len = (lexer->source_length - lexer->source_location.index) + 1;
 
     lexer->source_char_size = utf8_decode(&lexer->source_char, source_index, source_len);
 
@@ -306,6 +424,15 @@ void lexer_current_char_index(lexer_t *lexer, size_t index)
         fprint_location(stderr, &lexer->source_location);
 
         err("\tWhen lexing encoding not compatible with utf8.\n");
+
+    }
+
+    if (lexer->source_char_size == UTF8_INVALID)
+    {
+
+        fprint_location(stderr, &lexer->source_location);
+
+        err("\tWhen lexing utf8 decoding invalid.\n");
 
     }
 

@@ -211,6 +211,8 @@ int debug_main(int argc, char *argv[])
 
     }
 
+    printf("Starting to read the file: %s\n", source_file_path);
+
     size_t source_file_content_size = 0;
 
     char *source_file_content = load_text_file(source_file_path, &source_file_content_size);
@@ -224,30 +226,61 @@ int debug_main(int argc, char *argv[])
 
     }
 
+    printf("File content: \"");
+
     printf("%s", source_file_content);
+
+    printf("\"\n");
+
+    fflush(stdout);
+
+    printf("Starting to lexing the file:\n");
 
     lexer_t *lexer = create_lexer(source_file_content, source_file_content_size);
 
-    token_t *token = NULL;
+    token_t **tokens = NULL;
 
-    do
+    size_t tokens_count = 0;
+
+    if (!lexer_lex_all(lexer, &tokens, &tokens_count))
     {
 
-        token = lexer_lex(lexer);
+        return EXIT_FAILURE;
+
+    }
+
+    printf("Generated tokens:\n");
+
+    for (size_t q = 0; q < tokens_count; q++)
+    {
+
+        token_t *token = tokens[q];
 
         print_token(token, true);
 
-        putc('\n', stdout);
-
-        if (token->type == TOKEN_TYPE_INVALID)
-        {
-
-            lexer_next_char(lexer);
-
-        }
-
     }
-    while (token != NULL && token->type != TOKEN_TYPE_EOS);
+
+    printf("Starting to parsing the file:\n");
+    
+    parser_t *parser = create_parser(tokens, tokens_count);
+
+    ast_node_t *root_node = parser_parse(parser);
+
+    if (!root_node)
+    {
+
+        err("\troot_node is NULL.\n");
+
+    }    
+
+    if (root_node->type == TOKEN_TYPE_INVALID)
+    {
+    
+        err("\troot_node TYPE is TOKEN_TYPE_INVALID.\n");
+        
+    }
+
+    
 
     return EXIT_SUCCESS;
 

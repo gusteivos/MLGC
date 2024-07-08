@@ -1,0 +1,49 @@
+
+# line comment
+
+@#
+
+ block comment
+
+#@
+
+$ define FOR_MLGP
+
+func entry() : void
+{
+
+    @#
+
+        integer variables:
+
+        types:
+            byte  = int8 , flags (signed | unsigned) default unsigned
+            short = int16, flags (signed | unsigned) default signed
+            int   = int32, flags (signed | unsigned) default signed
+            long  = int64, flags (signed | unsigned) default signed
+
+    #@
+
+    var a : byte  = 0b00000000;
+
+    var b : short = 0o000000  ;
+
+    var c : int   = 0h00000000;
+
+    var d : long  = 0         ;
+
+    @#
+
+        floating point variables:
+
+        types:
+            single = float32, flags
+            double = float64, flags
+
+    #@
+
+    var e : single = 0.0      ;
+
+    var f : double = 0.0      ;
+
+}

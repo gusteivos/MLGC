@@ -8,8 +8,11 @@
 
     #include "ascii.h"
     #include "file_util.h"
-    #include "lexer.h"
     #include "location.h"
+    #include "lexer.h"
+    #include "token.h"
+    #include "parser.h"
+    #include "ast.h"
     #include "util.h"
 
 

@@ -58,7 +58,12 @@ void *a_alloc(size_t s)
 
     void *ptr = malloc(s);
 
-    abort_if_null(ptr);
+    if (ptr == NULL && s != 0)
+    {
+
+        abort_if_null(ptr);
+
+    }
 
     return ptr;
 
@@ -69,7 +74,12 @@ void *a_clear_alloc(size_t n, size_t s)
 
     void *ptr = calloc(n, s);
 
-    abort_if_null(ptr);
+    if (ptr == NULL && s != 0)
+    {
+
+        abort_if_null(ptr);
+
+    }
 
     return ptr;
 
@@ -85,9 +95,14 @@ void *a_realloc(void *p, size_t s)
 
     }
 
-    void *ptr = realloc(p, s);;
+    void *ptr = realloc(p, s);
 
-    abort_if_null(ptr);
+    if (ptr == NULL && s != 0)
+    {
+
+        abort_if_null(ptr);
+
+    }
 
     return ptr;
 

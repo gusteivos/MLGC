@@ -75,6 +75,17 @@
     token_t *lexer_lex(lexer_t *lexer);
 
     /**
+     * Lexes all tokens from the source and stores them in the provided array.
+     * The function dynamically reallocates memory for the tokens array.
+     *
+     * @param lexer The lexer instance.
+     * @param tokens A pointer to an array of tokens, dynamically allocated and filled by this function.
+     * @param tokens_count A pointer to a size_t variable where the number of tokens will be stored.
+     * @return true if lexing is successful, false otherwise.
+     */
+    bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count);
+
+    /**
      * Resets the lexer with a new source and source length.
      * If the provided source is NULL, it uses the existing source and source length of the lexer.
      * If the provided source length is 0, it uses strlen to determine the length of the new source string.
