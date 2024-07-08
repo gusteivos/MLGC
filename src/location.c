@@ -1,16 +1,23 @@
 #include "location.h"
 
 
-void fprint_location(FILE *file, location_t *location)
+bool fprint_location(FILE *s, location_t *location)
 {
 
-    if (!file || !location)
+    if (!s || !location)
     {
-    
-        return;
-    
+
+        return false;
+
     }
 
-    fprintf(file, "Location:\n\tIndex: %zu, Line: %zu, Column: %zu\n", location->index, location->line, location->column);
+    int q = fprintf
+    (
+        s,
+        "Location:\n\tIndex: %zu\n\tLine: %zu\n\tColumn: %zu\n",
+        location->index, location->line, location->column
+    );
+
+    return !(q < 0);
 
 }

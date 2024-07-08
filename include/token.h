@@ -7,7 +7,6 @@
     #include <stdbool.h>
     #include "location.h"
 
-
     typedef enum token_type_s
     {
 
@@ -92,12 +91,29 @@
     } token_type_t;
 
     /**
-     * Converts a token_type_t value to its string representation.
+     * @brief Converts a token type to its corresponding string representation.
      *
-     * @param type The type of the token.
+     * This function takes a token type (of type token_type_t) and returns
+     * a string that describes the token type. If the token type is not
+     * recognized, it returns "UNKNOWN".
+     *
+     * @param type The token type to convert.
      * @return A string representing the token type.
      */
     char *token_type_to_string(token_type_t type);
+
+    /**
+     * @brief Converts a token type to its corresponding symbol.
+     *
+     * This function takes a token type (of type token_type_t) and returns
+     * a string that represents the symbol for the token type. If the token
+     * type has no direct symbol representation, it falls back to returning
+     * the string representation using the token_type_to_string function.
+     *
+     * @param type The token type to convert.
+     * @return A string representing the token type symbol.
+     */
+    char *token_type_to_symbol(token_type_t type);
 
     typedef struct token_s
     {
@@ -111,40 +127,51 @@
     } token_t;
 
     /**
-     * Creates and initializes a new token with the provided values.
+     * @brief Creates a new token with the specified type, value, and location.
+     *
+     * This function allocates memory for a new token, initializes it with the provided
+     * type, value, and location, and returns a pointer to the newly created token.
      *
      * @param type The type of the token.
-     * @param value The value of the token (will be duplicated).
-     * @param location The location where the token was found.
-     * @return A pointer to the newly created token, or NULL if allocation fails.
+     * @param value The value associated with the token.
+     * @param location The location information of the token.
+     * @return A pointer to the newly created token, or NULL if memory allocation fails.
      */
     token_t *create_token(token_type_t type, char *value, location_t location);
 
     /**
-     * Initializes an existing token with the provided values.
+     * @brief Initializes a token with the specified type, value, and location.
      *
-     * @param token The token to be initialized.
+     * This function initializes the fields of the provided token structure
+     * with the given type, value, and location.
+     *
+     * @param token A pointer to the token structure to initialize.
      * @param type The type of the token.
-     * @param value The value of the token (will be duplicated).
-     * @param location The location where the token was found.
-     * @return true if initialization is successful, false otherwise.
+     * @param value The value associated with the token.
+     * @param location The location information of the token.
+     * @return true if initialization was successful, false otherwise.
      */
     bool init_token(token_t *token, token_type_t type, char *value, location_t location);
 
     /**
-     * Prints the token information.
+     * @brief Prints the details of a token to a given file STREAM.
      *
-     * @param token The token to be printed.
-     * @param token_type_name If true, prints the token type name; otherwise prints the numeric value of the type.
-     * @return true if the token is valid and printing is successful, false otherwise.
+     * This function prints the type, type symbol, value, and location of a token to the specified file STREAM.
+     *
+     * @param s The file STREAM to print to.
+     * @param token The token to print.
+     * @return true if the token was printed successfully, false otherwise.
      */
-    bool print_token(token_t *token, bool token_type_name);
+    bool fprint_token(FILE *s, token_t *token);
 
     /**
-     * Frees the memory allocated for the token's value and the token itself.
+     * @brief Destroys (frees) a token.
      *
-     * @param token The token to be destroyed.
-     * @return true if the token is valid and destruction is successful, false otherwise.
+     * This function frees the memory allocated for a token structure. Note that
+     * this function does not free the memory pointed to by token->value.
+     *
+     * @param token A pointer to the token structure to destroy.
+     * @return true if the token was successfully destroyed, false otherwise.
      */
     bool destroy_token(token_t *token);
 
@@ -180,5 +207,7 @@
      * @return true if the operation is successful, false otherwise.
      */
     bool token_mapping_value_token_type(token_mapping_t *token_mapping, token_t *token, bool *mapped, bool use_value);
+
+    #define print_token(token) fprint_token(stdout, token)
 
 #endif /* _MLG_TOKEN_H_ */
