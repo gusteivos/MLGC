@@ -4,37 +4,53 @@
 
     #include <stdint.h>
     #include <stdlib.h>
-   
+
 
     #define UTF8_INVALID UINT32_MAX
 
 
     /**
-     * Decodes a UTF-8 sequence from a string.
+     * Determines the number of bytes required to represent a UTF-8 character.
      *
-     * @param cp Pointer to a uint32_t to store the decoded codepoint.
-     * @param str Pointer to the input string containing the UTF-8 sequence.
-     * @param str_len Length of the input string.
-     * @return The number of bytes used for the decoded codepoint, 0 if the sequence is invalid or if decoding is invalid returns UTF8_INVALID.
+     * @param c The first byte of the UTF-8 character.
+     * @return The number of bytes needed to fully encode the character, or 0 if `c` is an invalid UTF-8 start byte.
+     */
+    size_t utf8_sized(uint8_t c);
+
+    /**
+     * Decodes a UTF-8 sequence to obtain the corresponding Unicode code point.
+     *
+     * @param cp Pointer to store the decoded Unicode code point.
+     * @param str UTF-8 string to decode.
+     * @param str_len Length of the UTF-8 string.
+     * @return The number of bytes consumed to decode the character, or 0 if invalid.
      */
     size_t utf8_decode(uint32_t *cp, char *str, size_t str_len);
 
     /**
-     * Encodes a codepoint into a UTF-8 sequence.
+     * Determines the size of the UTF-8 sequence needed to encode a Unicode code point.
      *
-     * @param str Pointer to the output string buffer.
-     * @param str_len Length of the output string buffer.
-     * @param cp The Unicode codepoint to encode.
-     * @return The number of bytes written to the output string, or 0 if the codepoint is invalid.
+     * @param cp Unicode code point.
+     * @return The number of bytes needed to encode the code point, or 0 if invalid.
+     */
+    size_t utf8_sizee(uint32_t cp);
+
+    /**
+     * Encodes a Unicode code point into a UTF-8 sequence.
+     *
+     * @param str Buffer to store the encoded UTF-8 sequence.
+     * @param str_len Size of the `str` buffer.
+     * @param cp Unicode code point to encode.
+     * @return The number of bytes written to the `str` buffer, or 0 if the buffer is too small or the code point is invalid.
      */
     size_t utf8_encode(char *str, size_t str_len, uint32_t cp);
 
     /**
-     * Searches for a specific UTF-8 encoded codepoint in a string.
+     * Locates the first occurrence of a Unicode code point in a UTF-8 string.
      *
-     * @param str Pointer to the input string.
-     * @param cp The Unicode codepoint to search for.
-     * @return Pointer to the first occurrence of the codepoint in the string, or NULL if not found.
+     * @param str UTF-8 string to search.
+     * @param cp Unicode code point to find.
+     * @return A pointer to the first occurrence of `cp` in the `str` string, or NULL if not found.
      */
     char *utf8_strchr(const char* str, uint32_t cp);
 
