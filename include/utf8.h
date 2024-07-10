@@ -4,6 +4,7 @@
 
     #include <stdint.h>
     #include <stdlib.h>
+    #include <string.h>
 
 
     #define UTF8_INVALID UINT32_MAX

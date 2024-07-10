@@ -1,5 +1,6 @@
 #include "utf8.h"
 
+
 size_t utf8_sized(uint8_t c)
 {
 
@@ -209,6 +210,8 @@ char *utf8_strchr(const char *str, uint32_t cp)
 
     }
 
+    size_t str_len = strlen(str);
+
     size_t q = 0;
 
     while (str[q] != '\0')
@@ -216,7 +219,7 @@ char *utf8_strchr(const char *str, uint32_t cp)
 
         uint32_t decoded_cp;
 
-        size_t len = utf8_decode(&decoded_cp, (char *)&str[q], 4);
+        size_t len = utf8_decode(&decoded_cp, (char *)&str[q], str_len - q);
 
         if (len == 0)
         {
