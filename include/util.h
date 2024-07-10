@@ -8,15 +8,13 @@
     #include <stdarg.h>
 
 
-    /**
-     * The FNV-1a offset basis constant.
-     */
+    #ifndef FNV_OFFSET_BASIS
     #define FNV_OFFSET_BASIS 2166136261u
+    #endif
 
-    /**
-     * The FNV-1a prime constant.
-     */
+    #ifndef FNV_PRIME
     #define FNV_PRIME 16777619u
+    #endif
 
 
     /**
@@ -41,11 +39,11 @@
      * This function prints an error message containing the function name and line number
      * where the check was performed, before aborting the program.
      *
-     * @param p The pointer to be checked.
      * @param function The name of the function where the check was performed.
      * @param line The line number where the check was performed.
+     * @param p The pointer to be checked.
      */
-    void abort_if_null_function_line(void *p, const char *func, int line);
+    void abort_if_null_function_line(const char *func, int line, void *p);
 
     /**
      * Allocates memory of the specified size.
@@ -85,18 +83,34 @@
      */
     char *a_duplicate_string(const char *s);
 
+    /**
+     * @brief Displays a formatted error message and terminates the program.
+     *
+     * This function displays a formatted error message on the standard error output (stderr),
+     * indicating the function and line where the error occurred. It then terminates the program
+     * with an exit code indicating failure.
+     *
+     * @param func The name of the function where the error occurred.
+     * @param line The line number where the error occurred.
+     * @param fmt  The format string for the error message.
+     * @param ...  Additional arguments for the format string.
+     */
     void err_function_line(const char *func, int line, const char *fmt, ...);
 
+    /**
+     * @brief Displays a formatted warning message.
+     *
+     * This function displays a formatted warning message on the standard output (stdout),
+     * indicating the function and line where the warning occurred.
+     *
+     * @param func The name of the function where the warning occurred.
+     * @param line The line number where the warning occurred.
+     * @param fmt  The format string for the warning message.
+     * @param ...  Additional arguments for the format string.
+     */
     void war_function_line(const char *func, int line, const char *fmt, ...);
 
-
-    /**
-     * Checks if the given pointer is null.
-     * If it is null, calls abort().
-     *
-     * @param p The pointer to check.
-     */
-    #define abort_if_null(p) abort_if_null_function_line(p, __FUNCTION__, __LINE__)
+    #define abort_if_null(p) abort_if_null_function_line(__FUNCTION__, __LINE__, p)
 
     #define err(fmt, ...) err_function_line(__FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 
