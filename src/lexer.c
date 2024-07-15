@@ -29,33 +29,25 @@ token_mapping_t lexer_token_keyword_mappings[] =
 };
 
 
-lexer_t *create_lexer(char *source, size_t source_length)
+lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length)
 {
 
     lexer_t *lexer = (lexer_t *)a_alloc(sizeof(lexer_t));
 
-    if (!init_lexer(lexer, source, source_length))
-    {
-
-        free(lexer);
-
-        return NULL;
-
-    }
-
+    init_lexer(lexer, source_filename, source, source_length);
+    
     return lexer;
 
 }
 
-bool init_lexer(lexer_t *lexer, char *source, size_t source_length)
+bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length)
 {
 
-    if (!lexer || !source)
-    {
+    abort_if_null(lexer);
 
-        return false;
+    abort_if_null((char *)source_filename);
 
-    }
+    abort_if_null(source);
 
     if (source_length == 0)
     {
@@ -63,6 +55,8 @@ bool init_lexer(lexer_t *lexer, char *source, size_t source_length)
         source_length = strlen(source);
 
     }
+
+    lexer->source_filename = source_filename;
 
     lexer->source = source;
 
@@ -78,6 +72,14 @@ bool init_lexer(lexer_t *lexer, char *source, size_t source_length)
 
     lexer_update_source_location(lexer);
 
+    init_buffer(&lexer->buffer, LEXER_BUFFER_INITIAL_CAPACITY);
+
+    lexer->use_buffer = false;
+
+    lexer->tab_width = LEXER_TAB_WIDTH;
+
+    lexer->chars_considered_whitespace = LEXER_CHARS_CONSIDERED_WHITESPACE;
+
     return true;
 
 }
@@ -85,12 +87,7 @@ bool init_lexer(lexer_t *lexer, char *source, size_t source_length)
 token_t *lexer_lex(lexer_t *lexer)
 {
 
-    if (!lexer)
-    {
-
-        return NULL;
-
-    }
+    abort_if_null(lexer);
 
     bool exit = false;
 
@@ -117,57 +114,22 @@ token_t *lexer_lex(lexer_t *lexer)
 
         }
 
-        if (lexer->source_char == '@') /*TODO: make a function for it.*/
+        if (lexer->source_char == '@')
         {
 
-            lexer_peek_char(lexer, 1);
-
-            if (lexer->source_char == '#')
+            if (lexer_skip_block_comment(lexer))
             {
-
-                lexer_next_char(lexer);
-
-                lexer_next_char(lexer);
-
-                while (lexer->source_char != '\0')
-                {
-
-                    if (lexer->source_char == '#')
-                    {
-
-                        lexer_peek_char(lexer, 1);
-
-                        if (lexer->source_char == '@')
-                        {
-
-                            lexer_next_char(lexer);
-
-                            lexer_next_char(lexer);
-
-                            break;
-
-                        }
-
-                    }
-
-                    lexer_next_char(lexer);
-
-                }
-
-                if    (lexer->source_char == '\0')
-                {
-
-                    fprint_location(stderr, &lexer->source_location);
-
-                    err("\tTODO: .\n");
-
-                }
 
                 continue;
 
             }
 
-            lexer_current_char(lexer);
+            if (lexer->source_char == '\0')
+            {
+
+                err("\tTODO: .\n");
+
+            }
 
         }
 
@@ -226,7 +188,7 @@ token_t *lexer_lex(lexer_t *lexer)
             break;
 
         case '#':
-            lexer_skip_line(lexer);
+            lexer_skip_line_comment(lexer);
             continue;
 
         case '$':
@@ -253,13 +215,6 @@ token_t *lexer_lex(lexer_t *lexer)
                 char str[] = { '\0', '\0', '\0', '\0', '\0' };
 
                 size_t utf8_encode_size = utf8_encode(str, sizeof(str), lexer->source_char);
-
-                if (utf8_encode_size == 0)
-                {
-
-                    /* TODO: .*/
-
-                }
 
                 err("\tWhen lexing invalid char \'%s\'.\n", utf8_encode_size ? str : "invalid and not encodable char");
 
@@ -292,18 +247,9 @@ bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
 
         token = lexer_lex(lexer);
 
-        if (!token)
-        {
-
-            err("\tTODO: .\n");
-
-        }
-
         (*tokens_count)++;
 
-        token_t **new_tokens = (token_t **)a_realloc(*tokens, *tokens_count * sizeof(token_t *));
-
-        *tokens = new_tokens;
+        *tokens = (token_t **)a_realloc(*tokens, *tokens_count * sizeof(token_t *));
 
         (*tokens)[*tokens_count - 1] = token;
 
@@ -320,36 +266,15 @@ bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
 
 }
 
-bool reset_lexer(lexer_t *lexer, char *source, size_t source_length)
-{
-
-    if (!lexer)
-    {
-
-        return false;
-
-    }
-
-    if (!source)
-    {
-
-        source = lexer->source;
-
-        source_length = lexer->source_length;
-
-    }
-
-    return init_lexer(lexer, source, source_length);
-
-}
-
 bool destroy_lexer(lexer_t *lexer)
 {
 
-    if (!lexer)
+    abort_if_null(lexer);
+
+    if (lexer->buffer.data)
     {
 
-        return false;
+        free(lexer->buffer.data);
 
     }
 
@@ -378,11 +303,7 @@ void lexer_update_source_location(lexer_t *lexer)
 
     case '\t':
 
-        lexer->source_location.column += LEXER_TAB_WIDTH;
-        /*
-        TODO:
-            lexer->source_location.column += lexer->tab_width;
-        */
+        lexer->source_location.column += lexer->tab_width;
 
         break;
 
@@ -452,6 +373,17 @@ void lexer_next_char(lexer_t *lexer)
 
     abort_if_null(lexer);
 
+    if (lexer->use_buffer)
+    {
+
+        char str[] = { '\0', '\0', '\0', '\0', '\0' };
+
+        size_t utf8_encode_size = utf8_encode(str, sizeof(str) - 1, lexer->source_char);
+        
+        buffer_add_string(&lexer->buffer, str);
+
+    }
+
     if (lexer->source_location.index < lexer->source_length)
     {
 
@@ -477,7 +409,7 @@ void lexer_peek_char(lexer_t *lexer, size_t offset)
 }
 
 
-void lexer_skip_line(lexer_t *lexer)
+bool lexer_skip_line(lexer_t *lexer)
 {
 
     abort_if_null(lexer);
@@ -495,9 +427,11 @@ void lexer_skip_line(lexer_t *lexer)
 
     }
 
+    return true;
+
 }
 
-void lexer_skip_chars_considered_whitespace(lexer_t *lexer)
+bool lexer_skip_chars_considered_whitespace(lexer_t *lexer)
 {
 
     abort_if_null(lexer);
@@ -505,17 +439,69 @@ void lexer_skip_chars_considered_whitespace(lexer_t *lexer)
     while
     (
         lexer->source_char &&
-        utf8_strchr(LEXER_CHARS_CONSIDERED_WHITESPACE, lexer->source_char)
-        /*
-        TODO:
-            utf8_strchr(lexer->chars_considered_whitespace, lexer->source_char)
-        */
+        utf8_strchr((const char *)lexer->chars_considered_whitespace, lexer->source_char)
     )
     {
 
         lexer_next_char(lexer);
 
     }
+
+    return true;
+
+}
+
+bool lexer_skip_line_comment(lexer_t *lexer)
+{
+
+    return lexer_skip_line(lexer);
+
+}
+
+bool lexer_skip_block_comment(lexer_t *lexer)
+{
+
+    abort_if_null(lexer);
+
+    if (lexer->source_char != '@')
+    {
+
+        return false;
+        
+    }
+
+    lexer_peek_char(lexer, 1);
+
+    if (lexer->source_char != '#')
+    {
+
+        return false;
+
+    }
+
+    lexer_next_char(lexer);
+
+    uint32_t last_source_char;
+
+    do
+    {
+    
+        last_source_char = lexer->source_char;
+
+        lexer_next_char(lexer);
+
+        if (lexer->source_char == '\0')
+        {
+
+            return false;
+
+        }
+
+    } while (last_source_char != '#' || lexer->source_char != '@');
+
+    lexer_next_char(lexer);
+    
+    return true;
 
 }
 
@@ -812,7 +798,11 @@ token_t *lexer_lex3(lexer_t *lexer, token_t *token)
 char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length)
 {
 
-    char *str = NULL;
+    abort_if_null(lexer);
+
+    reset_buffer(&lexer->buffer);
+
+    lexer->use_buffer = true;
 
     size_t str_len = 0;
 
@@ -824,24 +814,17 @@ char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, 
     )
     {
 
-        str = (char *)a_realloc(str, (str_len + lexer->source_char_size) * sizeof(char));
-
-        char *source_index = str + str_len;
-
-        utf8_encode(source_index, lexer->source_char_size, lexer->source_char);
-
         str_len += lexer->source_char_size;
 
         lexer_next_char(lexer);
 
     }
 
-    if (str != NULL)
-    {
+    lexer->use_buffer = false;
 
-        str[str_len] = '\0';
+    char *str = NULL;
 
-    }
+    buffer_to_string(&lexer->buffer, &str);
 
     return str;
 
@@ -849,6 +832,10 @@ char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, 
 
 bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token)
 {
+
+    abort_if_null(lexer);
+ 
+    abort_if_null(token);
 
     char *token_valeu = lexer_parse_sequence(lexer, isalpha, LEXER_PARSE_CHAR_SEQUENCE_OTHERS, __SIZE_MAX__);
 
@@ -905,6 +892,10 @@ bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token)
 
 bool lexer_parse_digit_sequence(lexer_t *lexer, token_t *token)
 {
+
+    abort_if_null(lexer);
+ 
+    abort_if_null(token);
 
     char *token_valeu = lexer_parse_sequence(lexer, isdigit, LEXER_PARSE_DIGIT_SEQUENCE_OTHERS, __SIZE_MAX__);
 

@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 
     }
 
-    /* TODO: lex parse visit emit compile */
+    /* TODO: lex parse check emit: compile. */
 
     return EXIT_SUCCESS;
 
@@ -236,7 +236,7 @@ int debug_main(int argc, char *argv[])
 
     printf("Starting to lexing the file:\n");
 
-    lexer_t *lexer = create_lexer(source_file_content, source_file_content_size);
+    lexer_t *lexer = create_lexer(source_file_path, source_file_content, source_file_content_size);
 
     token_t **tokens = NULL;
 
@@ -280,7 +280,7 @@ int debug_main(int argc, char *argv[])
         
     }
 
-    
+
 
     return EXIT_SUCCESS;
 

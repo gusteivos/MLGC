@@ -30,7 +30,6 @@ bool init_buffer(buffer_t *buffer, size_t capacity)
 
     }
 
-
     buffer->count = 0;
 
     buffer->data = NULL;
@@ -204,7 +203,7 @@ bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len)
         return false;
 
     }
-    
+
     *str = a_alloc(str_len + 1 * sizeof(char));
 
     if (!buffer_get_data(buffer, (void *)*str, str_len))
@@ -227,31 +226,27 @@ bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len)
 bool buffer_to_string(buffer_t *buffer, char **str)
 {
 
-    if (!buffer || !str)
+    if (!buffer || buffer->count == 0 || !str)
     {
 
         return false;
 
     }
 
-    char *str_buffer = (char *)a_alloc((buffer->count + 1) * sizeof(char));
-  
-    if (!buffer_get_data(buffer, str_buffer, buffer->count))
+    if (buffer->count >= buffer->capacity)
     {
 
-        free(str_buffer);
+        grow_buffer(buffer, buffer->count + sizeof(char));
 
-        return false;
+    }
 
-    } 
+    buffer->data[buffer->count] = '\0';
 
-    size_t str_len = strlen(str_buffer);
+   size_t str_len = strlen((char *)buffer->data);
 
-    *str = (char *)a_alloc(str_len + 1);
+    *str = (char *)a_alloc((str_len + 1) * sizeof(char));
 
-    strcpy(*str, (const char *)str_buffer);
-
-    free(str_buffer);
+    strcpy(*str, (char *)buffer->data);
 
     return true;
 
