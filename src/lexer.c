@@ -35,7 +35,7 @@ lexer_t *create_lexer(const char *source_filename, char *source, size_t source_l
     lexer_t *lexer = (lexer_t *)a_alloc(sizeof(lexer_t));
 
     init_lexer(lexer, source_filename, source, source_length);
-    
+
     return lexer;
 
 }
@@ -45,7 +45,7 @@ bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_
 
     abort_if_null(lexer);
 
-    abort_if_null((char *)source_filename);
+    abort_if_null((void *)source_filename);
 
     abort_if_null(source);
 
@@ -58,9 +58,11 @@ bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_
 
     lexer->source_filename = source_filename;
 
+
     lexer->source = source;
 
     lexer->source_length = source_length;
+
 
     lexer->source_location.index = 0;
 
@@ -76,11 +78,54 @@ bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_
 
     lexer->use_buffer = false;
 
+
     lexer->tab_width = LEXER_TAB_WIDTH;
 
     lexer->chars_considered_whitespace = LEXER_CHARS_CONSIDERED_WHITESPACE;
 
     return true;
+
+}
+
+bool fprint_lexer(FILE *s, lexer_t *lexer)
+{
+
+    abort_if_null(s);
+
+    abort_if_null(lexer);
+
+    int q = fprintf(s, "Lexer:\n\tSource filename: %s\n\tSource file: %p\n", lexer->source_filename, (void *)lexer->source_file);
+
+    if (q < 0)
+    {
+
+        return false;
+
+    }
+
+    bool w = fprint_location(s, &lexer->source_location);
+
+    if (!w)
+    {
+
+        return false;
+
+    }
+
+    q = fprintf(s, "\tCurrent source char: %u\n\tCurrent source char size: %zu\n", lexer->source_char, lexer->source_char_size);
+
+    if (q < 0)
+    {
+
+        return false;
+
+    }
+
+    /* TODO: print buffer.*/
+
+    q = fprintf(s, "Use buffer: %s\n", lexer->use_buffer ? "true" : "false");
+
+    return !(q < 0);
 
 }
 
@@ -379,7 +424,7 @@ void lexer_next_char(lexer_t *lexer)
         char str[] = { '\0', '\0', '\0', '\0', '\0' };
 
         size_t utf8_encode_size = utf8_encode(str, sizeof(str) - 1, lexer->source_char);
-        
+
         buffer_add_string(&lexer->buffer, str);
 
     }
@@ -467,7 +512,7 @@ bool lexer_skip_block_comment(lexer_t *lexer)
     {
 
         return false;
-        
+
     }
 
     lexer_peek_char(lexer, 1);
@@ -485,7 +530,7 @@ bool lexer_skip_block_comment(lexer_t *lexer)
 
     do
     {
-    
+
         last_source_char = lexer->source_char;
 
         lexer_next_char(lexer);
@@ -500,7 +545,7 @@ bool lexer_skip_block_comment(lexer_t *lexer)
     } while (last_source_char != '#' || lexer->source_char != '@');
 
     lexer_next_char(lexer);
-    
+
     return true;
 
 }
@@ -834,7 +879,7 @@ bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token)
 {
 
     abort_if_null(lexer);
- 
+
     abort_if_null(token);
 
     char *token_valeu = lexer_parse_sequence(lexer, isalpha, LEXER_PARSE_CHAR_SEQUENCE_OTHERS, __SIZE_MAX__);
@@ -894,7 +939,7 @@ bool lexer_parse_digit_sequence(lexer_t *lexer, token_t *token)
 {
 
     abort_if_null(lexer);
- 
+
     abort_if_null(token);
 
     char *token_valeu = lexer_parse_sequence(lexer, isdigit, LEXER_PARSE_DIGIT_SEQUENCE_OTHERS, __SIZE_MAX__);

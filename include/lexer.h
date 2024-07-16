@@ -39,7 +39,7 @@
 
         const char *source_filename;
 
-        FILE *source_file;  /* for the future. */
+        FILE *source_file; /* for the future. */
 
         char *source;
 
@@ -55,6 +55,8 @@
 
         bool use_buffer;
 
+        /*  */
+
         size_t tab_width;
 
         char *chars_considered_whitespace;
@@ -65,6 +67,8 @@
     lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length);
 
     bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length);
+
+    bool fprint_lexer(FILE *s, lexer_t *lexer);
 
     /**
      * Lexes the next token from the source.
