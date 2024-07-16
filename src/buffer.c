@@ -41,12 +41,7 @@ bool init_buffer(buffer_t *buffer, size_t capacity)
 bool reset_buffer(buffer_t *buffer)
 {
 
-    if (!buffer)
-    {
-
-        return false;
-
-    }
+    abort_if_null(buffer);
 
     buffer->count = 0;
 
@@ -57,18 +52,13 @@ bool reset_buffer(buffer_t *buffer)
 bool grow_buffer(buffer_t *buffer, size_t new_capacity)
 {
 
-    if (!buffer)
-    {
-
-        return false;
-
-    }
+    abort_if_null(buffer);
 
     buffer->capacity = new_capacity;
 
     buffer->data = a_realloc(buffer->data, buffer->capacity * sizeof(uint8_t));
 
-    if (buffer->count >= buffer->capacity)
+    if (buffer->count > buffer->capacity)
     {
 
         buffer->count = buffer->capacity;
@@ -82,14 +72,16 @@ bool grow_buffer(buffer_t *buffer, size_t new_capacity)
 bool buffer_add_data(buffer_t *buffer, void *data, size_t data_size)
 {
 
-    if (!buffer || !data || data_size == 0)
+    abort_if_null(buffer);
+
+    if (!data || data_size == 0)
     {
 
         return false;
 
     }
 
-    if (buffer->count + data_size > buffer->capacity)
+    if (buffer->count + data_size > buffer->capacity || !buffer->data)
     {
 
         grow_buffer(buffer, buffer->capacity + data_size);
@@ -151,14 +143,16 @@ bool buffer_add_string(buffer_t *buffer, char *str)
 bool buffer_get_data(buffer_t *buffer, void *data, size_t data_size)
 {
 
-    if (!buffer || !data || data_size == 0)
+    abort_if_null(buffer);
+
+    if (!data || data_size == 0)
     {
 
         return false;
 
     }
 
-    if (data_size > buffer->count)
+    if (data_size > buffer->count || !buffer->data)
     {
 
         return false;
@@ -197,7 +191,9 @@ bool buffer_get_uint32(buffer_t *buffer, uint32_t *u)
 bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len)
 {
 
-    if (!buffer || str_len == 0)
+    abort_if_null(buffer);
+
+    if (str_len == 0)
     {
 
         return false;
@@ -226,14 +222,16 @@ bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len)
 bool buffer_to_string(buffer_t *buffer, char **str)
 {
 
-    if (!buffer || buffer->count == 0 || !str)
+    abort_if_null(buffer);
+
+    if (buffer->count == 0 || !str)
     {
 
         return false;
 
     }
 
-    if (buffer->count >= buffer->capacity)
+    if (buffer->count + sizeof(char) > buffer->capacity)
     {
 
         grow_buffer(buffer, buffer->count + sizeof(char));
@@ -242,7 +240,7 @@ bool buffer_to_string(buffer_t *buffer, char **str)
 
     buffer->data[buffer->count] = '\0';
 
-   size_t str_len = strlen((char *)buffer->data);
+    size_t str_len = strlen((char *)buffer->data);
 
     *str = (char *)a_alloc((str_len + 1) * sizeof(char));
 
