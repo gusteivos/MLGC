@@ -1,3 +1,4 @@
+
 #ifndef _MLG_UTIL_H_
 #define _MLG_UTIL_H_
 
@@ -8,22 +9,26 @@
     #include <stdarg.h>
 
 
-    #ifndef FNV_OFFSET_BASIS
-    #define FNV_OFFSET_BASIS 2166136261u
+    #ifndef DJB2_MAGIC_NUMBER
+    #define DJB2_MAGIC_NUMBER 5381
     #endif
 
-    #ifndef FNV_PRIME
-    #define FNV_PRIME 16777619u
+    #ifndef FNV_32_OFFSET_BASIS
+    #define FNV_32_OFFSET_BASIS 2166136261
+    #endif
+
+    #ifndef FNV_32_PRIME
+    #define FNV_32_PRIME 16777619
     #endif
 
 
-    /**
-     * Computes the djb2 hash of a string.
-     *
-     * @param str The input string to hash.
-     * @return The computed hash value.
-     */
-    uint32_t djb2_string(const char *str);
+    uint32_t djb2_32(const void *data, size_t data_size);
+
+    uint32_t djb2_32_string(const char *str);
+
+    uint32_t fnv1a_32(const void *data, size_t data_size);
+
+    uint32_t fnv1a_32_string(const char *str);
 
     /**
      * Computes the FNV-1a hash of a string.

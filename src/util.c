@@ -1,17 +1,24 @@
 #include "util.h"
 
 
-uint32_t djb2_string(const char *str)
+uint32_t djb2_32(const void *data, size_t data_size)
 {
 
-    uint32_t hash = 5381;
-
-    int c;
-
-    while ((c = *str++))
+    if (data == NULL || data_size == 0)
     {
 
-        hash = ((hash << 5) + hash) + c;
+        return DJB2_MAGIC_NUMBER;
+
+    }
+
+    const uint8_t *bytes = (const uint8_t *)data;
+
+    uint32_t hash = DJB2_MAGIC_NUMBER;
+
+    for (size_t i = 0; i < data_size; ++i)
+    {
+
+        hash = ((hash << 5) + hash) + bytes[i]; /* hash * 33 + byte; */
 
     }
 
@@ -19,17 +26,74 @@ uint32_t djb2_string(const char *str)
 
 }
 
-uint32_t fnv1a_string(const char *str)
+uint32_t djb2_32_string(const char *str)
 {
 
-    uint32_t hash = FNV_OFFSET_BASIS;
-
-    while (*str)
+    if (str == NULL)
     {
 
-        hash ^= (uint8_t)(*str++);
+        return DJB2_MAGIC_NUMBER;
 
-        hash *= FNV_PRIME;
+    }
+
+    uint32_t hash = DJB2_MAGIC_NUMBER;
+
+    int c;
+
+    while ((c = *str++))
+    {
+
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c; */
+
+    }
+
+    return hash;
+
+}
+
+uint32_t fnv1a_32(const void *data, size_t data_size)
+{
+
+    if (data == NULL || data_size == 0)
+    {
+
+        return FNV_32_OFFSET_BASIS;
+
+    }
+
+    const uint8_t *bytes = (const uint8_t *)data;
+
+    uint32_t hash = FNV_32_OFFSET_BASIS;
+
+    for (size_t i = 0; i < data_size; ++i)
+    {
+
+        hash = (hash ^ bytes[i]) * FNV_32_PRIME; /* hash ^ byte; hash * FNV_32_PRIME; */
+
+    }
+
+    return hash;
+
+}
+
+uint32_t fnv1a_32_string(const char *str)
+{
+
+    if (str == NULL)
+    {
+
+        return FNV_32_OFFSET_BASIS;
+
+    }
+
+    uint32_t hash = FNV_32_OFFSET_BASIS;
+
+    int c;
+
+    while ((c = *str++))
+    {
+
+        hash = (hash ^ c) * FNV_32_PRIME; /* hash ^ c; hash * FNV_32_PRIME; */
 
     }
 
