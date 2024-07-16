@@ -23,12 +23,7 @@ buffer_t *create_buffer(size_t capacity)
 bool init_buffer(buffer_t *buffer, size_t capacity)
 {
 
-    if (!buffer)
-    {
-
-        return false;
-
-    }
+    abort_if_null(buffer);
 
     buffer->count = 0;
 
@@ -253,12 +248,7 @@ bool buffer_to_string(buffer_t *buffer, char **str)
 bool destroy_buffer(buffer_t *buffer)
 {
 
-    if (!buffer)
-    {
-
-        return false;
-
-    }
+    abort_if_null(buffer);
 
     if (buffer->data)
     {
