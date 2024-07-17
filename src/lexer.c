@@ -90,7 +90,12 @@ bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_
 bool fprint_lexer(FILE *s, lexer_t *lexer)
 {
 
-    abort_if_null(s);
+    if (!s)
+    {
+
+        return true;
+
+    }
 
     abort_if_null(lexer);
 

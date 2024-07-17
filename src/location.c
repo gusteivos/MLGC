@@ -4,7 +4,14 @@
 bool fprint_location(FILE *s, location_t *location)
 {
 
-    if (!s || !location)
+    if (!s)
+    {
+
+        return true;
+
+    }
+
+    if (!location)
     {
 
         return false;

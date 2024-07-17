@@ -153,15 +153,6 @@
      */
     bool init_token(token_t *token, token_type_t type, char *value, location_t location);
 
-    /**
-     * @brief Prints the details of a token to a given file STREAM.
-     *
-     * This function prints the type, type symbol, value, and location of a token to the specified file STREAM.
-     *
-     * @param s The file STREAM to print to.
-     * @param token The token to print.
-     * @return true if the token was printed successfully, false otherwise.
-     */
     bool fprint_token(FILE *s, token_t *token);
 
     /**
@@ -207,7 +198,5 @@
      * @return true if the operation is successful, false otherwise.
      */
     bool token_mapping_value_token_type(token_mapping_t *token_mapping, token_t *token, bool *mapped, bool use_value);
-
-    #define print_token(token) fprint_token(stdout, token)
 
 #endif /* _MLG_TOKEN_H_ */

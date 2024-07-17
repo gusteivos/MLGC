@@ -144,7 +144,14 @@ bool init_token(token_t *token, token_type_t type, char *value, location_t locat
 bool fprint_token(FILE *s, token_t *token)
 {
 
-    if (!s || !token)
+    if (!s)
+    {
+
+        return true;
+
+    }
+
+    if (!token)
     {
 
         return false;
