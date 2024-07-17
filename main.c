@@ -256,7 +256,7 @@ int debug_main(int argc, char *argv[])
 
         token_t *token = tokens[q];
 
-        print_token(token);
+        fprint_token(stdout, token);
 
     }
 

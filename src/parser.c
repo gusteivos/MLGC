@@ -168,7 +168,7 @@ ast_node_t *parser_parse_statement(parser_t *parser)
 
     default:
 
-        print_token(parser->token);
+        fprint_token(stderr, parser->token);
 
         err("\tWhen parsing, invalid token type %d.\n", parser->token->type);
 
@@ -396,7 +396,7 @@ ast_node_t *parser_parse_factor(parser_t *parser)
         
     default:
 
-        print_token(parser->token);
+        fprint_token(stderr, parser->token);
 
         err("\tTODO: .\n");
 
