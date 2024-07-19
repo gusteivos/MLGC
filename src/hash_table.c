@@ -84,7 +84,7 @@ bool destroy_hash_table_entry(hash_table_entry_t *entry, void (*destroy_value) (
 
 }
 
-hash_table_t *create_hash_table(size_t capacity, hash_function_t hash_function)
+hash_table_t *create_hash_table(size_t capacity, hash_table_hash_function_t hash_function)
 {
 
     abort_if_null(hash_function);
@@ -262,8 +262,15 @@ bool hash_table_lookup(hash_table_t *table, uint8_t *key, size_t key_lenght, voi
 
     hash_table_entry_t *current_entry = table->entrys[entry_index];
 
-    while (current_entry && current_entry->key_length == key_lenght && memcmp(current_entry->key, key, key_lenght))
+    while (current_entry)
     {
+
+        if (current_entry->key_length == key_lenght && memcmp(current_entry->key, key, key_lenght) == 0)
+        {
+
+            break;
+
+        }
 
         current_entry = current_entry->next;
 
@@ -278,7 +285,6 @@ bool hash_table_lookup(hash_table_t *table, uint8_t *key, size_t key_lenght, voi
 
     if (value)
     {
-
 
         *value = current_entry->value;
 
@@ -310,8 +316,15 @@ bool hash_table_delete(hash_table_t *table, uint8_t *key, size_t key_lenght, voi
 
     hash_table_entry_t *previous_entry = NULL;
 
-    while (current_entry && current_entry->key_length == key_lenght && memcmp(current_entry->key, key, key_lenght))
+    while (current_entry)
     {
+
+        if (current_entry->key_length == key_lenght && memcmp(current_entry->key, key, key_lenght) == 0)
+        {
+
+            break;
+
+        }
 
         previous_entry = current_entry;
 

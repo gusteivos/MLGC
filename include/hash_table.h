@@ -8,7 +8,7 @@
     #include <stdio.h>
 
 
-    typedef uint64_t (*hash_function_t) (void *, size_t);
+    typedef uint64_t (*hash_table_hash_function_t) (void *, size_t);
 
     typedef struct hash_table_entry_s
     {
@@ -34,13 +34,13 @@
 
         size_t capacity;
 
-        hash_function_t hash_function;
+        hash_table_hash_function_t hash_function;
 
         hash_table_entry_t **entrys;
 
     } hash_table_t;
 
-    hash_table_t *create_hash_table(size_t capacity, hash_function_t hash_function);
+    hash_table_t *create_hash_table(size_t capacity, hash_table_hash_function_t hash_function);
 
     bool fprint_hash_table(FILE *s, hash_table_t *table);
 
@@ -51,7 +51,7 @@
     bool hash_table_lookup(hash_table_t *table, uint8_t *key, size_t key_lenght, void **value);
 
     bool hash_table_delete(hash_table_t *table, uint8_t *key, size_t key_lenght, void **value);
-    
+
     bool destroy_hash_table(hash_table_t *table, void (*) (void *));
 
 #endif
