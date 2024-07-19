@@ -124,12 +124,7 @@ token_t *create_token(token_type_t type, char *value, location_t location)
 bool init_token(token_t *token, token_type_t type, char *value, location_t location)
 {
 
-    if (!token)
-    {
-
-        return false;
-
-    }
+    abort_if_null(token);
 
     token->type = type;
 
@@ -151,12 +146,7 @@ bool fprint_token(FILE *s, token_t *token)
 
     }
 
-    if (!token)
-    {
-
-        return false;
-
-    }
+    abort_if_null(token);
 
     int q = fprintf
     (
@@ -174,12 +164,7 @@ bool fprint_token(FILE *s, token_t *token)
 bool destroy_token(token_t *token)
 {
 
-    if (!token)
-    {
-
-        return false;
-
-    }
+    abort_if_null(token);
 
     free(token);
 
