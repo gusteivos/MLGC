@@ -177,6 +177,13 @@ void *a_realloc(void *p, size_t s)
 char *a_duplicate_string(const char *s)
 {
 
+    if (s == NULL)
+    {
+        
+        return NULL;
+ 
+    }
+
     size_t len = strlen(s);
 
     char *dup = (char *)a_alloc(len + 1);
