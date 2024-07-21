@@ -128,7 +128,7 @@ bool init_token(token_t *token, token_type_t type, char *value, location_t locat
 
     token->type = type;
 
-    token->value = value;
+    token->value = a_duplicate_string(value);
 
     token->location = location;
 
@@ -165,6 +165,13 @@ bool destroy_token(token_t *token)
 {
 
     abort_if_null(token);
+
+    if (token->value)
+    {
+
+        free(token->value);
+
+    }
 
     free(token);
 

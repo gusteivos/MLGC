@@ -126,44 +126,12 @@
 
     } token_t;
 
-    /**
-     * @brief Creates a new token with the specified type, value, and location.
-     *
-     * This function allocates memory for a new token, initializes it with the provided
-     * type, value, and location, and returns a pointer to the newly created token.
-     *
-     * @param type The type of the token.
-     * @param value The value associated with the token.
-     * @param location The location information of the token.
-     * @return A pointer to the newly created token, or NULL if memory allocation fails.
-     */
     token_t *create_token(token_type_t type, char *value, location_t location);
 
-    /**
-     * @brief Initializes a token with the specified type, value, and location.
-     *
-     * This function initializes the fields of the provided token structure
-     * with the given type, value, and location.
-     *
-     * @param token A pointer to the token structure to initialize.
-     * @param type The type of the token.
-     * @param value The value associated with the token.
-     * @param location The location information of the token.
-     * @return true if initialization was successful, false otherwise.
-     */
     bool init_token(token_t *token, token_type_t type, char *value, location_t location);
 
     bool fprint_token(FILE *s, token_t *token);
 
-    /**
-     * @brief Destroys (frees) a token.
-     *
-     * This function frees the memory allocated for a token structure. Note that
-     * this function does not free the memory pointed to by token->value.
-     *
-     * @param token A pointer to the token structure to destroy.
-     * @return true if the token was successfully destroyed, false otherwise.
-     */
     bool destroy_token(token_t *token);
 
 #endif /* _MLG_TOKEN_H_ */
