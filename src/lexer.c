@@ -817,7 +817,13 @@ token_t *lexer_lex(lexer_t *lexer)
 
     }
 
-    token_t *token = create_token(type, value, location);
+    token_t *token = (token_t *)a_alloc(sizeof(token_t));
+
+    token->type = type;
+
+    token->value = value;
+
+    token->location = location;
 
     return token;
 
