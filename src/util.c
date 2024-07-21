@@ -188,8 +188,6 @@ char *a_duplicate_string(const char *s)
 
     char *dup = (char *)a_alloc(len + 1);
 
-    abort_if_null((void *)dup);
-
     strcpy(dup, s);
 
     return dup;
