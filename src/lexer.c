@@ -422,7 +422,7 @@ bool lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, s
 
     }
 
-    return str_len > 0;
+    return lexer->use_buffer = str_len > 0;
 
 }
 
