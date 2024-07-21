@@ -29,10 +29,10 @@
 
     void usage(char *name, bool show_help, int exit_status);
 
-    #ifndef NDEBUG
-   
+#ifndef NDEBUG
+
     int debug_main(int argc, char *argv[]);
-   
-    #endif
+
+#endif
 
 #endif /* _MLGC_MAIN_H_ */

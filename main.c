@@ -78,9 +78,9 @@ int main(int argc, char *argv[])
             single_file_mode = true;
 
             shift_argc_argv(&argc, &argv);
-        
+
             continue;
-        
+
         }
 
         if
@@ -93,17 +93,17 @@ int main(int argc, char *argv[])
 
             if (argc > 0)
             {
-    
+
                 if (output_file_name)
                 {
-                
+
                     war(
                         "\tOutput file name already specified,\n"
                         "\tOverwriting the previous one.\n"
                     );
 
                     free(output_file_name);
-                
+
                 }
 
                 output_file_name = a_duplicate_string(argv[0]);
@@ -119,19 +119,19 @@ int main(int argc, char *argv[])
             }
 
             shift_argc_argv(&argc, &argv);
-            
+
             continue;
 
         }
 
         input_files = a_realloc(input_files, (input_files_count + 1) * sizeof(char *));
-        
+
         input_files[input_files_count] = a_duplicate_string(value);
-        
+
         input_files_count++;
 
         shift_argc_argv(&argc, &argv);
-    
+
     }
 
     if (single_file_mode && input_files_count > 1)
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 
 void usage(char *name, bool show_help, int exit_status)
 {
-    
+
     printf
     (
         "\n"
@@ -176,7 +176,7 @@ if (show_help)
     (
         "\t\t-h, --help            Output this help information\n"
     );
-   
+
 }
 
     printf
@@ -184,7 +184,7 @@ if (show_help)
         "\n"
         "\t\tAny other arguments are interpreted as input files.\n"
         "\n"
-    );    
+    );
 
     exit(exit_status);
 
@@ -236,6 +236,8 @@ int debug_main(int argc, char *argv[])
 
     printf("Starting to lexing the file:\n");
 
+    start_lexing();
+
     lexer_t *lexer = create_lexer(source_file_path, source_file_content, source_file_content_size);
 
     token_t **tokens = NULL;
@@ -260,8 +262,10 @@ int debug_main(int argc, char *argv[])
 
     }
 
+    finish_lexing();
+
     printf("Starting to parsing the file:\n");
-    
+
     parser_t *parser = create_parser(tokens, tokens_count);
 
     ast_node_t *root_node = parser_parse(parser);
@@ -271,13 +275,13 @@ int debug_main(int argc, char *argv[])
 
         err("\troot_node is NULL.\n");
 
-    }    
+    }
 
     if (root_node->type == TOKEN_TYPE_INVALID)
     {
-    
+
         err("\troot_node TYPE is TOKEN_TYPE_INVALID.\n");
-        
+
     }
 
 

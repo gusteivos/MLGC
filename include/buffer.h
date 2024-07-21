@@ -74,7 +74,7 @@
 
     bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len);
 
-    bool buffer_to_string(buffer_t *buffer, char **str);
+    bool buffer_to_string(buffer_t *buffer, char **str, size_t *str_len);
 
     /**
      * @brief Destroys the buffer, freeing its memory.

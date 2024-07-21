@@ -214,7 +214,7 @@ bool buffer_get_string(buffer_t *buffer, char **str, size_t str_len)
 
 }
 
-bool buffer_to_string(buffer_t *buffer, char **str)
+bool buffer_to_string(buffer_t *buffer, char **str, size_t *str_len)
 {
 
     abort_if_null(buffer);
@@ -235,11 +235,18 @@ bool buffer_to_string(buffer_t *buffer, char **str)
 
     buffer->data[buffer->count] = '\0';
 
-    size_t str_len = strlen((char *)buffer->data);
+    size_t len = strlen((char *)buffer->data);
 
-    *str = (char *)a_alloc((str_len + 1) * sizeof(char));
+    *str = (char *)a_alloc((len + 1) * sizeof(char));
 
     strcpy(*str, (char *)buffer->data);
+
+    if (str_len)
+    {
+
+        *str_len = len;
+
+    }
 
     return true;
 

@@ -7,7 +7,7 @@
     #include <stdbool.h>
     #include "location.h"
 
-    typedef enum token_type_s
+    typedef enum token_type_e
     {
 
         TOKEN_TYPE_INVALID = 0,
@@ -165,38 +165,5 @@
      * @return true if the token was successfully destroyed, false otherwise.
      */
     bool destroy_token(token_t *token);
-
-    typedef struct token_mapping_s
-    {
-
-        token_type_t type;
-
-        char *value0;
-
-        char *value1;
-
-    } token_mapping_t;
-
-    /**
-     * Maps a token type to a token mapping value.
-     *
-     * @param token The token to be mapped.
-     * @param token_mapping The token mapping to be used.
-     * @param mapped Pointer to a boolean indicating whether the mapping was successful.
-     * @param use_value If true, the token's value will be updated.
-     * @return true if the operation is successful, false otherwise.
-     */
-    bool token_type_token_mapping_value(token_t *token, token_mapping_t *token_mapping, bool *mapped, bool use_value);
-
-    /**
-     * Maps a token value to a token type based on a token mapping.
-     *
-     * @param token_mapping The token mapping to be used.
-     * @param token The token to be mapped.
-     * @param mapped Pointer to a boolean indicating whether the mapping was successful.
-     * @param use_value If true, the token's value will be updated.
-     * @return true if the operation is successful, false otherwise.
-     */
-    bool token_mapping_value_token_type(token_mapping_t *token_mapping, token_t *token, bool *mapped, bool use_value);
 
 #endif /* _MLG_TOKEN_H_ */

@@ -1,344 +1,38 @@
 #include "lexer.h"
 #include "util.h"
+#include "utf8.h"
+#include "hash_table.h"
 
 
-token_mapping_t lexer_token_keyword_mappings[] =
+static hash_table_t *keyword_table = NULL;
+
+static bool keyword_table_insert(char *keyword, token_type_t type)
 {
 
-    { TOKEN_TYPE_KEYWORD_VARIABLE, "var" , "variable" },
-    { TOKEN_TYPE_KEYWORD_FUNCTION, "func", "function" },
-
-    { TOKEN_TYPE_KEYWORD_VOID , "void" , NULL },
-
-    { TOKEN_TYPE_KEYWORD_INT8 , "byte" , "int8"  },
-    { TOKEN_TYPE_KEYWORD_INT16, "short", "int16" },
-    { TOKEN_TYPE_KEYWORD_INT32, "int"  , "int32" },
-    { TOKEN_TYPE_KEYWORD_INT64, "long" , "int64" },
-
-    { TOKEN_TYPE_KEYWORD_FLOAT32, "single", "float32" },
-    { TOKEN_TYPE_KEYWORD_FLOAT64, "double", "float64" },
-
-    { TOKEN_TYPE_KEYWORD_SIGNED  , "signed"  , NULL },
-    { TOKEN_TYPE_KEYWORD_UNSIGNED, "unsigned", NULL },
-
-    { TOKEN_TYPE_KEYWORD_SIZEOF, "sizeof", NULL },
-    { TOKEN_TYPE_KEYWORD_KINDOF, "kindof", NULL },
-
-    { TOKEN_TYPE_EOS, NULL, NULL }
-
-};
-
-
-lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length)
-{
-
-    lexer_t *lexer = (lexer_t *)a_alloc(sizeof(lexer_t));
-
-    init_lexer(lexer, source_filename, source, source_length);
-
-    return lexer;
-
-}
-
-bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length)
-{
-
-    abort_if_null(lexer);
-
-    abort_if_null((void *)source_filename);
-
-    abort_if_null(source);
-
-    if (source_length == 0)
-    {
-
-        source_length = strlen(source);
-
-    }
-
-    lexer->source_filename = source_filename;
-
-
-    lexer->source = source;
-
-    lexer->source_length = source_length;
-
-
-    lexer->source_location.index = 0;
-
-    lexer->source_location.line = 1;
-
-    lexer->source_location.column = 0;
-
-    lexer_current_char(lexer);
-
-    lexer_update_source_location(lexer);
-
-    init_buffer(&lexer->buffer, LEXER_BUFFER_INITIAL_CAPACITY);
-
-    lexer->use_buffer = false;
-
-
-    lexer->tab_width = LEXER_TAB_WIDTH;
-
-    lexer->chars_considered_whitespace = LEXER_CHARS_CONSIDERED_WHITESPACE;
+    hash_table_insert(keyword_table, (uint8_t *)keyword, strlen(keyword), (void *)type);
 
     return true;
 
 }
 
-bool fprint_lexer(FILE *s, lexer_t *lexer)
+static bool keyword_table_lookup(char *key, size_t key_lenght, token_type_t *type)
 {
 
-    if (!s)
+    void *value = NULL;
+
+    if (type && hash_table_lookup(keyword_table, (uint8_t *)key, key_lenght, &value))
     {
 
-        return true;
+        *type = (token_type_t)value;
 
     }
-
-    abort_if_null(lexer);
-
-    int q = fprintf(s, "Lexer:\n\tSource filename: %s\n\tSource file: %p\n", lexer->source_filename, (void *)lexer->source_file);
-
-    if (q < 0)
-    {
-
-        return false;
-
-    }
-
-    bool w = fprint_location(s, &lexer->source_location);
-
-    if (!w)
-    {
-
-        return false;
-
-    }
-
-    q = fprintf(s, "\tCurrent source char: %u\n\tCurrent source char size: %zu\n", lexer->source_char, lexer->source_char_size);
-
-    if (q < 0)
-    {
-
-        return false;
-
-    }
-
-    /* TODO: print buffer.*/
-
-    q = fprintf(s, "Use buffer: %s\n", lexer->use_buffer ? "true" : "false");
-
-    return !(q < 0);
-
-}
-
-token_t *lexer_lex(lexer_t *lexer)
-{
-
-    abort_if_null(lexer);
-
-    bool exit = false;
-
-    token_t *token = create_token(TOKEN_TYPE_INVALID, NULL, (location_t){ 0, 0, 0 });
-
-    do
-    {
-
-        lexer_skip_chars_considered_whitespace(lexer);
-
-        token->location = lexer->source_location;
-
-        if (lexer_parse_char_sequence (lexer, token))
-        {
-
-            return token;
-
-        }
-
-        if (lexer_parse_digit_sequence(lexer, token))
-        {
-
-            return token;
-
-        }
-
-        if (lexer->source_char == '@')
-        {
-
-            if (lexer_skip_block_comment(lexer))
-            {
-
-                continue;
-
-            }
-
-            if (lexer->source_char == '\0')
-            {
-
-                err("\tTODO: .\n");
-
-            }
-
-        }
-
-        switch (lexer->source_char)
-        {
-
-        case '+':
-        case '-':
-        case '*':
-        case '/':
-        case '%':
-        case '^':
-        case '!':
-        case '=':
-            return lexer_lex2(lexer, token);
-        case '~':
-            token->type = TOKEN_TYPE_TILDE;
-            break;
-
-        case '<':
-        case '>':
-        case '&':
-        case '|':
-            return lexer_lex3(lexer, token);
-
-    	case '.':
-            token->type = TOKEN_TYPE_DOT;
-            break;
-    	case ',':
-            token->type = TOKEN_TYPE_COMMA;
-            break;
-        case ':':
-            token->type = TOKEN_TYPE_COLON;
-            break;
-        case ';':
-            token->type = TOKEN_TYPE_SEMICOLON;
-            break;
-
-        case '[':
-            token->type = TOKEN_TYPE_LEFT_BRACKET;
-            break;
-        case ']':
-            token->type = TOKEN_TYPE_RIGHT_BRACKET;
-            break;
-        case '{':
-            token->type = TOKEN_TYPE_LEFT_BRACE;
-            break;
-        case '}':
-            token->type = TOKEN_TYPE_RIGHT_BRACE;
-            break;
-        case '(':
-            token->type = TOKEN_TYPE_LEFT_PAREN;
-            break;
-        case ')':
-            token->type = TOKEN_TYPE_RIGHT_PAREN;
-            break;
-
-        case '#':
-            lexer_skip_line_comment(lexer);
-            continue;
-
-        case '$':
-            {
-
-                fprint_location(stderr, &lexer->source_location);
-
-                war("\tLine for preprocessor not processed, skipping the line.\n");
-
-                lexer_skip_line(lexer);
-
-            }
-            continue;
-
-        case '\0':
-            token->type = TOKEN_TYPE_EOS;
-            break;
-
-        default:
-            {
-
-                fprint_location(stderr, &lexer->source_location);
-
-                char str[] = { '\0', '\0', '\0', '\0', '\0' };
-
-                size_t utf8_encode_size = utf8_encode(str, sizeof(str), lexer->source_char);
-
-                err("\tWhen lexing invalid char \'%s\'.\n", utf8_encode_size ? str : "invalid and not encodable char");
-
-                exit = true;
-
-            }
-            continue;
-
-        }
-
-        lexer_next_char(lexer);
-
-    } while (token->type == TOKEN_TYPE_INVALID && !exit);
-
-    return token;
-
-}
-
-bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
-{
-
-    abort_if_null(lexer);
-
-    abort_if_null(tokens_count);
-
-    token_t *token = NULL;
-
-    do
-    {
-
-        token = lexer_lex(lexer);
-
-        (*tokens_count)++;
-
-        *tokens = (token_t **)a_realloc(*tokens, *tokens_count * sizeof(token_t *));
-
-        (*tokens)[*tokens_count - 1] = token;
-
-        if (token->type == TOKEN_TYPE_INVALID)
-        {
-
-            return false;
-
-        }
-
-    } while (token && token->type != TOKEN_TYPE_EOS);
 
     return true;
 
 }
-
-bool destroy_lexer(lexer_t *lexer)
-{
-
-    abort_if_null(lexer);
-
-    if (lexer->buffer.data)
-    {
-
-        free(lexer->buffer.data);
-
-    }
-
-    free(lexer);
-
-    return true;
-
-}
-
 
 void lexer_update_source_location(lexer_t *lexer)
 {
-
-    abort_if_null(lexer);
 
     switch (lexer->source_char)
     {
@@ -458,7 +152,6 @@ void lexer_peek_char(lexer_t *lexer, size_t offset)
 
 }
 
-
 bool lexer_skip_line(lexer_t *lexer)
 {
 
@@ -531,6 +224,8 @@ bool lexer_skip_block_comment(lexer_t *lexer)
 
     lexer_next_char(lexer);
 
+    lexer_next_char(lexer);
+
     uint32_t last_source_char;
 
     do
@@ -555,11 +250,32 @@ bool lexer_skip_block_comment(lexer_t *lexer)
 
 }
 
-
-token_t *lexer_lex2(lexer_t *lexer, token_t *token)
+static bool lexer_lex_2compound(lexer_t *lexer, uint32_t ac, token_type_t att, token_type_t btt, token_type_t *type)
 {
 
-    char c = lexer->source_char;
+    if (lexer->source_char == ac)
+    {
+
+        lexer_next_char(lexer);
+
+        *type = att;
+
+    }
+    else
+    {
+
+        *type = btt;
+
+    }
+
+    return true;
+
+}
+
+static bool lexer_lex_type2(lexer_t *lexer, token_type_t *type)
+{
+
+    uint32_t c = lexer->source_char;
 
     lexer_next_char(lexer);
 
@@ -567,139 +283,90 @@ token_t *lexer_lex2(lexer_t *lexer, token_t *token)
     {
 
     case '+':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_PLUS_EQUAL, TOKEN_TYPE_PLUS, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_PLUS_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_PLUS;
-            break;
-
-        }
-        break;
     case '-':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_MINUS_EQUAL, TOKEN_TYPE_MINUS, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_MINUS_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_MINUS;
-            break;
-
-        }
-        break;
     case '*':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_ASTERISK_EQUAL, TOKEN_TYPE_ASTERISK, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_ASTERISK_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_ASTERISK;
-            break;
-
-        }
-        break;
     case '/':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_SLASH_EQUAL, TOKEN_TYPE_SLASH, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_SLASH_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_SLASH;
-            break;
-
-        }
-        break;
     case '%':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_PERCENT_EQUAL, TOKEN_TYPE_PERCENT, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_PERCENT_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_PERCENT;
-            break;
-
-        }
-        break;
     case '^':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_CARET_EQUAL, TOKEN_TYPE_CARET, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_CARET_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_CARET;
-            break;
-
-        }
-        break;
     case '!':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_EXCLAMATION_EQUAL, TOKEN_TYPE_EXCLAMATION, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_EXCLAMATION_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_EXCLAMATION;
-            break;
-
-        }
-        break;
     case '=':
-        switch (lexer->source_char)
-        {
-
-        case '=':
-            token->type = TOKEN_TYPE_EQUAL_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_EQUAL;
-            break;
-
-        }
-        break;
+        return lexer_lex_2compound(lexer, '=', TOKEN_TYPE_EQUAL_EQUAL, TOKEN_TYPE_EQUAL, type);
 
     default:
-        abort_if_null(NULL);
+        {
+
+            err("\tTODO: .\n");
+
+        }
+        return false;
 
     }
 
-    return token;
+    return true;
 
 }
 
-token_t *lexer_lex3(lexer_t *lexer, token_t *token)
+static bool lexer_lex_3compound(lexer_t *lexer, uint32_t ac, token_type_t att, uint32_t bc, uint32_t cc, token_type_t ctt, token_type_t btt, token_type_t dtt, token_type_t *type)
 {
 
-    char c = lexer->source_char;
+    if (lexer->source_char == ac)
+    {
+
+        *type = att;
+
+        lexer_next_char(lexer);
+
+    }
+    else if (lexer->source_char == bc)
+    {
+
+        lexer_next_char(lexer);
+
+        if (lexer->source_char == cc)
+        {
+
+            *type = ctt;
+
+            lexer_next_char(lexer);
+
+        }
+        else
+        {
+
+            *type = btt;
+
+        }
+
+    }
+    else
+    {
+
+        *type = dtt;
+
+    }
+
+    return true;
+
+}
+
+static bool lexer_lex_type3(lexer_t *lexer, token_type_t *type)
+{
+
+    uint32_t c = lexer->source_char;
 
     lexer_next_char(lexer);
 
@@ -707,148 +374,33 @@ token_t *lexer_lex3(lexer_t *lexer, token_t *token)
     {
 
     case '<':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_3compound(lexer, '=', TOKEN_TYPE_LESS_THAN_EQUAL, '<', '=', TOKEN_TYPE_LEFT_SHIFT_EQUAL, TOKEN_TYPE_LEFT_SHIFT, TOKEN_TYPE_LESS_THAN, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_LESS_THAN_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        case '<':
-            {
-
-                lexer_next_char(lexer);
-
-                token->type = (lexer->source_char == '=') ? TOKEN_TYPE_LEFT_SHIFT_EQUAL : TOKEN_TYPE_LEFT_SHIFT;
-
-                if (lexer->source_char == '=')
-                {
-
-                    lexer_next_char(lexer);
-
-                }
-
-            }
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_LESS_THAN;
-            break;
-
-        }
-        break;
     case '>':
-        switch (lexer->source_char)
-        {
+        return lexer_lex_3compound(lexer, '=', TOKEN_TYPE_GREATER_THAN_EQUAL, '>', '=', TOKEN_TYPE_RIGHT_SHIFT_EQUAL, TOKEN_TYPE_RIGHT_SHIFT, TOKEN_TYPE_GREATER_THAN, type);
 
-        case '=':
-            token->type = TOKEN_TYPE_GREATER_THAN_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        case '>':
-            {
-
-                lexer_next_char(lexer);
-
-                token->type = (lexer->source_char == '=') ? TOKEN_TYPE_RIGHT_SHIFT_EQUAL : TOKEN_TYPE_RIGHT_SHIFT;
-
-                if (lexer->source_char == '=')
-                {
-
-                    lexer_next_char(lexer);
-
-                }
-
-            }
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_GREATER_THAN;
-            break;
-
-        }
-        break;
     case '&':
-        switch (lexer->source_char)
-        {
-
-        case '=':
-            token->type = TOKEN_TYPE_AMPERSAND_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        case '&':
-            {
-
-                lexer_next_char(lexer);
-
-                token->type = (lexer->source_char == '=') ? TOKEN_TYPE_LOGICAL_AND_EQUAL : TOKEN_TYPE_LOGICAL_AND;
-
-                if (lexer->source_char == '=')
-                {
-
-                    lexer_next_char(lexer);
-
-                }
-
-            }
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_AMPERSAND;
-            break;
-
-        }
-        break;
+        return lexer_lex_3compound(lexer, '=', TOKEN_TYPE_AMPERSAND_EQUAL, '&', '=', TOKEN_TYPE_LOGICAL_AND_EQUAL, TOKEN_TYPE_LOGICAL_AND, TOKEN_TYPE_AMPERSAND, type);
 
     case '|':
-        switch (lexer->source_char)
-        {
-
-        case '=':
-            token->type = TOKEN_TYPE_PIPE_EQUAL;
-            lexer_next_char(lexer);
-            break;
-
-        case '|':
-            {
-
-                lexer_next_char(lexer);
-
-                token->type = (lexer->source_char == '=') ? TOKEN_TYPE_LOGICAL_OR_EQUAL : TOKEN_TYPE_LOGICAL_OR;
-
-                if (lexer->source_char == '=')
-                {
-
-                    lexer_next_char(lexer);
-
-                }
-
-            }
-            break;
-
-        default:
-            token->type = TOKEN_TYPE_PIPE;
-            break;
-
-        }
-        break;
+        return lexer_lex_3compound(lexer, '=', TOKEN_TYPE_PIPE_EQUAL, '|', '=', TOKEN_TYPE_LOGICAL_OR_EQUAL, TOKEN_TYPE_LOGICAL_OR, TOKEN_TYPE_PIPE, type);
 
     default:
-        abort_if_null(NULL);
+        {
+
+            err("\tTODO: .\n");
+
+        }
+        return false;
 
     }
 
-    return token;
+    return true;
+
 }
 
-
-char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length)
+bool lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length)
 {
-
-    abort_if_null(lexer);
 
     reset_buffer(&lexer->buffer);
 
@@ -870,95 +422,455 @@ char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, 
 
     }
 
-    lexer->use_buffer = false;
-
-    char *str = NULL;
-
-    buffer_to_string(&lexer->buffer, &str);
-
-    return str;
+    return str_len > 0;
 
 }
 
-bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token)
+bool lexer_parse_char_sequence(lexer_t *lexer)
 {
 
-    abort_if_null(lexer);
+    return lexer_parse_sequence(lexer, isalpha, LEXER_PARSE_CHAR_SEQUENCE_OTHERS, __SIZE_MAX__);
 
-    abort_if_null(token);
+}
 
-    char *token_valeu = lexer_parse_sequence(lexer, isalpha, LEXER_PARSE_CHAR_SEQUENCE_OTHERS, __SIZE_MAX__);
+bool lexer_parse_digit_sequence(lexer_t *lexer)
+{
 
-    if (token_valeu == NULL)
+    return lexer_parse_sequence(lexer, isdigit, LEXER_PARSE_DIGIT_SEQUENCE_OTHERS, __SIZE_MAX__);
+
+}
+
+bool start_lexing()
+{
+
+    if (keyword_table)
     {
 
         return false;
 
     }
 
-    token->type = TOKEN_TYPE_IDENTIFIER;
+    keyword_table = create_hash_table(24, (hash_table_hash_function_t)fnv1a_32);
 
-    token->value = token_valeu;
+    keyword_table_insert("var", TOKEN_TYPE_KEYWORD_VARIABLE);
+    keyword_table_insert("func", TOKEN_TYPE_KEYWORD_FUNCTION);
 
-    size_t mapping_index = 0;
+    keyword_table_insert("void", TOKEN_TYPE_KEYWORD_VOID);
 
-    token_mapping_t current_mapping = lexer_token_keyword_mappings[mapping_index];
+    keyword_table_insert("byte", TOKEN_TYPE_KEYWORD_INT8);
+    keyword_table_insert("int8", TOKEN_TYPE_KEYWORD_INT8);
 
-    while
-    (
-        (
-            current_mapping.value0 != NULL ||
-            current_mapping.value1 != NULL
-        ) &&
-        current_mapping.type != TOKEN_TYPE_EOS
-    )
-    {
+    keyword_table_insert("short", TOKEN_TYPE_KEYWORD_INT16);
+    keyword_table_insert("int16", TOKEN_TYPE_KEYWORD_INT16);
 
-        bool mapped = false;
+    keyword_table_insert("int", TOKEN_TYPE_KEYWORD_INT32);
+    keyword_table_insert("int32", TOKEN_TYPE_KEYWORD_INT32);
 
-        if (!token_mapping_value_token_type(&current_mapping, token, &mapped, false))
-        {
+    keyword_table_insert("long", TOKEN_TYPE_KEYWORD_INT64);
+    keyword_table_insert("int64", TOKEN_TYPE_KEYWORD_INT64);
 
-            abort_if_null(NULL);
+    keyword_table_insert("single", TOKEN_TYPE_KEYWORD_FLOAT32);
+    keyword_table_insert("float32", TOKEN_TYPE_KEYWORD_FLOAT32);
 
-        }
+    keyword_table_insert("double", TOKEN_TYPE_KEYWORD_FLOAT64);
+    keyword_table_insert("float64", TOKEN_TYPE_KEYWORD_FLOAT64);
 
-        if (mapped)
-        {
+    keyword_table_insert("signed", TOKEN_TYPE_KEYWORD_SIGNED);
+    keyword_table_insert("unsigned", TOKEN_TYPE_KEYWORD_UNSIGNED);
 
-            break;
+    keyword_table_insert("sizeof", TOKEN_TYPE_KEYWORD_SIZEOF);
+    keyword_table_insert("kindof", TOKEN_TYPE_KEYWORD_KINDOF);
 
-        }
+#ifndef NDEBUG
 
-        mapping_index++;
+    fprint_hash_table(stdout, keyword_table);
 
-        current_mapping = lexer_token_keyword_mappings[mapping_index];
-
-    }
+#endif
 
     return true;
 
 }
 
-bool lexer_parse_digit_sequence(lexer_t *lexer, token_t *token)
+bool finish_lexing()
+{
+
+    abort_if_null(keyword_table);
+
+    destroy_hash_table(keyword_table, NULL);
+
+    return true;
+
+}
+
+lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length)
+{
+
+    lexer_t *lexer = (lexer_t *)a_alloc(sizeof(lexer_t));
+
+    init_lexer(lexer, source_filename, source, source_length);
+
+    return lexer;
+
+}
+
+bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length)
 {
 
     abort_if_null(lexer);
 
-    abort_if_null(token);
+    abort_if_null((void *)source_filename);
 
-    char *token_valeu = lexer_parse_sequence(lexer, isdigit, LEXER_PARSE_DIGIT_SEQUENCE_OTHERS, __SIZE_MAX__);
+    abort_if_null(source);
 
-    if (token_valeu == NULL)
+    if (source_length == 0)
+    {
+
+        source_length = strlen(source);
+
+    }
+
+    lexer->source_filename = source_filename;
+
+
+    lexer->source = source;
+
+    lexer->source_length = source_length;
+
+
+    lexer->source_location.index = 0;
+
+    lexer->source_location.line = 1;
+
+    lexer->source_location.column = 0;
+
+    lexer_current_char(lexer);
+
+    lexer_update_source_location(lexer);
+
+    init_buffer(&lexer->buffer, LEXER_BUFFER_INITIAL_CAPACITY);
+
+    lexer->use_buffer = false;
+
+
+    lexer->tab_width = LEXER_TAB_WIDTH;
+
+    lexer->chars_considered_whitespace = LEXER_CHARS_CONSIDERED_WHITESPACE;
+
+    return true;
+
+}
+
+bool fprint_lexer(FILE *s, lexer_t *lexer)
+{
+
+    if (!s)
+    {
+
+        return true;
+
+    }
+
+    abort_if_null(lexer);
+
+    int q = fprintf(s, "Lexer:\n\tSource filename: %s\n\tSource file: %p\n", lexer->source_filename, (void *)lexer->source_file);
+
+    if (q < 0)
     {
 
         return false;
 
     }
 
-    token->type = TOKEN_TYPE_LITERAL_NUMBER;
+    bool w = fprint_location(s, &lexer->source_location);
 
-    token->value = token_valeu;
+    if (!w)
+    {
+
+        return false;
+
+    }
+
+    q = fprintf(s, "\tCurrent source char: %u\n\tCurrent source char size: %zu\n", lexer->source_char, lexer->source_char_size);
+
+    if (q < 0)
+    {
+
+        return false;
+
+    }
+
+    /* TODO: print buffer.*/
+
+    q = fprintf(s, "Use buffer: %s\n", lexer->use_buffer ? "true" : "false");
+
+    return !(q < 0);
+
+}
+
+bool lexer_lex_type(lexer_t *lexer, token_type_t *type, location_t *location)
+{
+
+    abort_if_null(lexer);
+
+    abort_if_null(type);
+
+    *type = TOKEN_TYPE_INVALID;
+
+retry: /*TODO: remove it later.*/
+
+    lexer_skip_chars_considered_whitespace(lexer);
+
+    if (location)
+    {
+
+        *location = lexer->source_location;
+
+    }
+
+    if (lexer->source_char == '@')
+    {
+
+        if (lexer_skip_block_comment(lexer))
+        {
+
+            goto retry;
+
+        }
+
+        if (lexer->source_char == '\0')
+        {
+
+            fprint_location(stderr, location);
+
+            err("\tWhen lexing block comment not finished.\n");
+
+            return false;
+
+        }
+
+    }
+
+    if (lexer_parse_char_sequence(lexer))
+    {
+
+        *type = TOKEN_TYPE_IDENTIFIER;
+
+        return true;
+
+    }
+
+    if (lexer_parse_digit_sequence(lexer))
+    {
+
+        *type = TOKEN_TYPE_LITERAL_NUMBER;
+
+        return true;
+
+    }
+
+    switch (lexer->source_char)
+    {
+
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '%':
+    case '^':
+    case '!':
+    case '=':
+        return lexer_lex_type2(lexer, type);
+    case '~':
+        *type = TOKEN_TYPE_TILDE;
+        break;
+
+    case '<':
+    case '>':
+    case '&':
+    case '|':
+        return lexer_lex_type3(lexer, type);
+
+    case '.':
+        *type = TOKEN_TYPE_DOT;
+        break;
+    case ',':
+        *type = TOKEN_TYPE_COMMA;
+        break;
+    case ':':
+        *type = TOKEN_TYPE_COLON;
+        break;
+    case ';':
+        *type = TOKEN_TYPE_SEMICOLON;
+        break;
+
+    case '[':
+        *type = TOKEN_TYPE_LEFT_BRACKET;
+        break;
+    case ']':
+        *type = TOKEN_TYPE_RIGHT_BRACKET;
+        break;
+    case '{':
+        *type = TOKEN_TYPE_LEFT_BRACE;
+        break;
+    case '}':
+        *type = TOKEN_TYPE_RIGHT_BRACE;
+        break;
+    case '(':
+        *type = TOKEN_TYPE_LEFT_PAREN;
+        break;
+    case ')':
+        *type = TOKEN_TYPE_RIGHT_PAREN;
+        break;
+
+    case '#':
+        lexer_skip_line_comment(lexer);
+        goto retry;
+
+    case '$':
+        {
+
+            fprint_location(stdout, &lexer->source_location);
+
+            war("\tWhen lexing line for preprocessor not processed, skipping the line.\n");
+
+            lexer_skip_line(lexer);
+
+        }
+        goto retry;
+
+    case '\0':
+        *type = TOKEN_TYPE_EOS;
+        break;
+
+    default:
+        {
+
+            fprint_location(stderr, &lexer->source_location);
+
+            size_t utf8_size = utf8_sizee(lexer->source_char);
+
+            char *utf8_char = (char *)a_alloc((utf8_size + 1) * sizeof(char));
+
+            utf8_encode(utf8_char, utf8_size, lexer->source_char);
+
+            utf8_char[utf8_size] = '\0';
+
+            err("\tWhen lexing invalid char \'%s\'.\n", utf8_size ? utf8_char : "invalid and or not encodable char");
+
+            free(utf8_char);
+
+        }
+        return false;
+
+    }
+
+    lexer_next_char(lexer);
+
+    return true;
+
+}
+
+token_t *lexer_lex(lexer_t *lexer)
+{
+
+    token_type_t type;
+
+    location_t location;
+
+    lexer_lex_type(lexer, &type, &location);
+
+    char *value = NULL;
+
+    size_t value_lenght = 0;
+
+    if (lexer->use_buffer)
+    {
+
+        buffer_to_string(&lexer->buffer, &value, &value_lenght);
+
+        lexer->use_buffer = false;
+
+    }
+
+    if (type == TOKEN_TYPE_IDENTIFIER)
+    {
+
+        if (value)
+        {
+
+            if (keyword_table_lookup(value, value_lenght, &type))
+            {
+
+                free(value);
+
+                value = NULL;
+
+            }
+
+        }
+        else
+        {
+
+            type = TOKEN_TYPE_INVALID;
+
+        }
+
+    }
+
+    token_t *token = create_token(type, value, location);
+
+    return token;
+
+}
+
+bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
+{
+
+    abort_if_null(lexer);
+
+    abort_if_null(tokens);
+
+    abort_if_null(tokens_count);
+
+    token_t *token = NULL;
+
+    do
+    {
+
+        token = lexer_lex(lexer);
+
+        (*tokens_count)++;
+
+        *tokens = (token_t **)a_realloc(*tokens, *tokens_count * sizeof(token_t *));
+
+        (*tokens)[*tokens_count - 1] = token;
+
+        if (token->type == TOKEN_TYPE_INVALID)
+        {
+
+            return false;
+
+        }
+
+    } while (token && token->type != TOKEN_TYPE_EOS);
+
+    return true;
+
+}
+
+bool destroy_lexer(lexer_t *lexer)
+{
+
+    abort_if_null(lexer);
+
+    if (lexer->buffer.data)
+    {
+
+        free(lexer->buffer.data);
+
+    }
+
+    free(lexer);
 
     return true;
 

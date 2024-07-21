@@ -7,9 +7,9 @@
     #include <stdbool.h>
     #include <string.h>
     #include <ctype.h>
+
     #include "location.h"
     #include "token.h"
-    #include "utf8.h"
     #include "buffer.h"
 
 
@@ -33,6 +33,10 @@
     #define LEXER_TAB_WIDTH 4
     #endif
 
+
+    bool start_lexing();
+
+    bool finish_lexing();
 
     typedef struct lexer_s
     {
@@ -63,12 +67,13 @@
 
     } lexer_t;
 
-
     lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length);
 
     bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length);
 
     bool fprint_lexer(FILE *s, lexer_t *lexer);
+
+    bool lexer_lex_type(lexer_t *lexer, token_type_t *type, location_t *location);
 
     /**
      * Lexes the next token from the source.
@@ -96,37 +101,5 @@
      * @return true if the lexer is successfully destroyed, false otherwise.
      */
     bool destroy_lexer(lexer_t *lexer);
-
-
-    void lexer_update_source_location(lexer_t *lexer);
-
-    void lexer_current_char_index(lexer_t *lexer, size_t index);
-
-    void lexer_current_char(lexer_t *lexer);
-
-    void lexer_next_char(lexer_t *lexer);
-
-    void lexer_peek_char(lexer_t *lexer, size_t offset);
-
-
-    bool lexer_skip_chars_considered_whitespace(lexer_t *lexer);
-
-    bool lexer_skip_line(lexer_t *lexer);
-
-    bool lexer_skip_line_comment(lexer_t *lexer);
-
-    bool lexer_skip_block_comment(lexer_t *lexer);
-
-
-    token_t *lexer_lex2(lexer_t *lexer, token_t *token);
-
-    token_t *lexer_lex3(lexer_t *lexer, token_t *token);
-
-
-    char *lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length);
-
-    bool lexer_parse_char_sequence(lexer_t *lexer, token_t *token);
-
-    bool lexer_parse_digit_sequence(lexer_t *lexer, token_t *token);
 
 #endif /* _MLG_LEXER_H_ */
