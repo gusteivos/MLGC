@@ -76,7 +76,12 @@ bool destroy_hash_table_entry(hash_table_entry_t *entry, void (*destroy_value) (
 
     }
 
-    /*TODO: destroy next.*/
+    if (entry->next)
+    {
+
+        destroy_hash_table_entry(entry->next, destroy_value);
+
+    }
 
     free(entry);
 
@@ -370,8 +375,20 @@ bool destroy_hash_table(hash_table_t *table, void (*destroy_entry_value) (void *
 
     abort_if_null(table);
 
-    /*TODO: destroy entrys.*/
+    for (size_t q = 0; q < table->capacity; q++)
+    {
 
+        hash_table_entry_t *entry = table->entrys[q];
+
+        if (entry)
+        {
+
+            destroy_hash_table_entry(entry, destroy_entry_value);
+
+        }
+
+    }
+    
     free(table->entrys);
 
     free(table);
