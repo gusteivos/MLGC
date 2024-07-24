@@ -69,6 +69,8 @@ bool destroy_hash_table_entry(hash_table_entry_t *entry, void (*destroy_value) (
 
     abort_if_null(entry);
 
+    free(entry->key);
+
     if (entry->value && destroy_value)
     {
 
