@@ -128,8 +128,6 @@
 
     token_t *create_token(token_type_t type, char *value, location_t location);
 
-    bool init_token(token_t *token, token_type_t type, char *value, location_t location);
-
     bool fprint_token(FILE *s, token_t *token);
 
     bool destroy_token(token_t *token);

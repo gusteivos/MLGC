@@ -115,24 +115,13 @@ token_t *create_token(token_type_t type, char *value, location_t location)
 
     token_t *token = (token_t *)a_alloc(sizeof(token_t));
 
-    init_token(token, type, value, location);
-
-    return token;
-
-}
-
-bool init_token(token_t *token, token_type_t type, char *value, location_t location)
-{
-
-    abort_if_null(token);
-
     token->type = type;
 
     token->value = a_duplicate_string(value);
 
     token->location = location;
 
-    return true;
+    return token;
 
 }
 
