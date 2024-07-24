@@ -31,7 +31,8 @@ static bool keyword_table_lookup(char *key, size_t key_lenght, token_type_t *typ
 
 }
 
-void lexer_update_source_location(lexer_t *lexer)
+
+static bool lexer_update_source_location(lexer_t *lexer)
 {
 
     switch (lexer->source_char)
@@ -59,98 +60,67 @@ void lexer_update_source_location(lexer_t *lexer)
 
     }
 
+    return true;
+
 }
 
-void lexer_current_char_index(lexer_t *lexer, size_t index)
+static bool lexer_next_char(lexer_t *lexer)
 {
 
-    abort_if_null(lexer);
-
-    char *source_index = (char *)&lexer->source[index];
-
-    if (index >= lexer->source_length)
+    if (lexer->use_buffer && lexer->source_char_size > 0)
     {
 
-        lexer->source_char_size = 1;
+        char utf8_char[lexer->source_char_size * sizeof(char)];
 
-        lexer->source_char = '\0';
+        utf8_encode(utf8_char, lexer->source_char_size, lexer->source_char);
 
-        return;
+        buffer_add_data(&lexer->buffer, (void *)utf8_char, lexer->source_char_size);
 
     }
 
-    size_t source_len = (lexer->source_length - lexer->source_location.index) + 1;
+    int c = fgetc(lexer->source_file);
 
-    lexer->source_char_size = utf8_decode(&lexer->source_char, source_index, source_len);
+    if (c == EOF)
+    {
+
+        c = '\0';
+
+    }
+
+    lexer->source_location.index += lexer->source_char_size;
+
+    lexer->source_char_size = utf8_sized((uint8_t)c);
 
     if (lexer->source_char_size == 0)
     {
 
-        fprint_location(stderr, &lexer->source_location);
+        lexer->source_char = UTF8_INVALID;
 
-        err("\tWhen lexing encoding not compatible with utf8.\n");
+        lexer->source_char_size = 0;
+
+        return false;
 
     }
 
-    if (lexer->source_char_size == UTF8_INVALID)
+    char cb[lexer->source_char_size];
+
+    cb[0] = (char)c;
+
+    if (lexer->source_char_size > 1)
     {
 
-        fprint_location(stderr, &lexer->source_location);
-
-        err("\tWhen lexing utf8 decoding invalid.\n");
+        fread(&cb[1], sizeof(char), lexer->source_char_size - 1, lexer->source_file);
 
     }
 
-}
-
-void lexer_current_char(lexer_t *lexer)
-{
-
-    abort_if_null(lexer);
-
-    lexer_current_char_index(lexer, lexer->source_location.index);
-
-}
-
-void lexer_next_char(lexer_t *lexer)
-{
-
-    abort_if_null(lexer);
-
-    if (lexer->use_buffer)
-    {
-
-        char str[] = { '\0', '\0', '\0', '\0', '\0' };
-
-        size_t utf8_encode_size = utf8_encode(str, sizeof(str) - 1, lexer->source_char);
-
-        buffer_add_string(&lexer->buffer, str);
-
-    }
-
-    if (lexer->source_location.index < lexer->source_length)
-    {
-
-        lexer->source_location.index += lexer->source_char_size;
-
-    }
-
-    lexer_current_char(lexer);
+    utf8_decode(&lexer->source_char, cb, lexer->source_char_size);
 
     lexer_update_source_location(lexer);
 
-}
-
-void lexer_peek_char(lexer_t *lexer, size_t offset)
-{
-
-    abort_if_null(lexer);
-
-    size_t peek_index = lexer->source_location.index + offset;
-
-    lexer_current_char_index(lexer, peek_index);
+    return true;
 
 }
+
 
 bool lexer_skip_line(lexer_t *lexer)
 {
@@ -213,7 +183,7 @@ bool lexer_skip_block_comment(lexer_t *lexer)
 
     }
 
-    lexer_peek_char(lexer, 1);
+    lexer_next_char(lexer);
 
     if (lexer->source_char != '#')
     {
@@ -221,8 +191,6 @@ bool lexer_skip_block_comment(lexer_t *lexer)
         return false;
 
     }
-
-    lexer_next_char(lexer);
 
     lexer_next_char(lexer);
 
@@ -249,6 +217,7 @@ bool lexer_skip_block_comment(lexer_t *lexer)
     return true;
 
 }
+
 
 static bool lexer_lex_2compound(lexer_t *lexer, uint32_t ac, token_type_t att, token_type_t btt, token_type_t *type)
 {
@@ -399,6 +368,7 @@ static bool lexer_lex_type3(lexer_t *lexer, token_type_t *type)
 
 }
 
+
 bool lexer_parse_sequence(lexer_t *lexer, int (*char_rule)(int), char *others, size_t max_length)
 {
 
@@ -440,7 +410,8 @@ bool lexer_parse_digit_sequence(lexer_t *lexer)
 
 }
 
-bool start_lexing()
+
+bool init_lexing()
 {
 
     if (keyword_table)
@@ -491,7 +462,7 @@ bool start_lexing()
 
 }
 
-bool finish_lexing()
+bool quit_lexing()
 {
 
     abort_if_null(keyword_table);
@@ -502,55 +473,63 @@ bool finish_lexing()
 
 }
 
-lexer_t *create_lexer(const char *source_filename, char *source, size_t source_length)
+lexer_t *create_lexer(const char *source_filename, FILE *source_file)
 {
 
     lexer_t *lexer = (lexer_t *)a_alloc(sizeof(lexer_t));
 
-    init_lexer(lexer, source_filename, source, source_length);
+    if (!initialize_lexer(lexer, source_filename, source_file))
+    {
+
+        free(lexer);
+
+        return NULL;
+
+    }
 
     return lexer;
 
 }
 
-bool init_lexer(lexer_t *lexer, const char *source_filename, char *source, size_t source_length)
+bool initialize_lexer(lexer_t *lexer, const char *source_filename, FILE *source_file)
 {
 
     abort_if_null(lexer);
 
-    abort_if_null((void *)source_filename);
-
-    abort_if_null(source);
-
-    if (source_length == 0)
+    if (!source_filename && !source_file)
     {
 
-        source_length = strlen(source);
+        return false;
 
     }
 
     lexer->source_filename = source_filename;
 
+    lexer->source_file = source_file;
 
-    lexer->source = source;
+    if (!lexer->source_file)
+    {
 
-    lexer->source_length = source_length;
+        lexer->source_file = fopen(lexer->source_filename, LEXER_SOURCE_FILE_OPEN_MODE);
 
+        if (lexer->source_file == NULL)
+        {
 
-    lexer->source_location.index = 0;
+            return false;
 
-    lexer->source_location.line = 1;
+        }
 
-    lexer->source_location.column = 0;
-
-    lexer_current_char(lexer);
-
-    lexer_update_source_location(lexer);
+    }
 
     init_buffer(&lexer->buffer, LEXER_BUFFER_INITIAL_CAPACITY);
 
     lexer->use_buffer = false;
 
+    lexer->source_location = (location_t){ .index = 0, .line = 1, .column = 0 };
+
+    lexer->source_char_size = 0;
+
+    lexer_next_char(lexer);
 
     lexer->tab_width = LEXER_TAB_WIDTH;
 
@@ -642,7 +621,7 @@ retry: /*TODO: remove it later.*/
 
             fprint_location(stderr, location);
 
-            err("\tWhen lexing block comment not finished.\n");
+            err("\tWhen lexing block comment not started or finished.\n");
 
             return false;
 
@@ -749,15 +728,13 @@ retry: /*TODO: remove it later.*/
 
             size_t utf8_size = utf8_sizee(lexer->source_char);
 
-            char *utf8_char = (char *)a_alloc((utf8_size + 1) * sizeof(char));
+            char utf8_char[(utf8_size + 1) * sizeof(char)];
 
             utf8_encode(utf8_char, utf8_size, lexer->source_char);
 
             utf8_char[utf8_size] = '\0';
 
             err("\tWhen lexing invalid char \'%s\'.\n", utf8_size ? utf8_char : "invalid and or not encodable char");
-
-            free(utf8_char);
 
         }
         return false;
@@ -864,10 +841,17 @@ bool lexer_lex_all(lexer_t *lexer, token_t ***tokens, size_t *tokens_count)
 
 }
 
-bool destroy_lexer(lexer_t *lexer)
+bool finalize_lexer(lexer_t *lexer)
 {
 
     abort_if_null(lexer);
+
+    if (lexer->source_file)
+    {
+
+        fclose(lexer->source_file);
+
+    }
 
     if (lexer->buffer.data)
     {
@@ -875,6 +859,17 @@ bool destroy_lexer(lexer_t *lexer)
         free(lexer->buffer.data);
 
     }
+
+    return true;
+
+}
+
+bool destroy_lexer(lexer_t *lexer)
+{
+
+    abort_if_null(lexer);
+
+    finalize_lexer(lexer);
 
     free(lexer);
 

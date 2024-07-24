@@ -211,34 +211,13 @@ int debug_main(int argc, char *argv[])
 
     }
 
-    printf("Starting to read the file: %s\n", source_file_path);
-
-    size_t source_file_content_size = 0;
-
-    char *source_file_content = load_text_file(source_file_path, &source_file_content_size);
-
-    if (!source_file_content)
-    {
-
-        fprintf(stderr, "Failed to load source file: %s\n", source_file_path);
-
-        return EXIT_FAILURE;
-
-    }
-
-    printf("File content: \"");
-
-    printf("%s", source_file_content);
-
-    printf("\"\n");
-
-    fflush(stdout);
+    free(source_file_path_extension);
 
     printf("Starting to lexing the file:\n");
 
-    start_lexing();
+    init_lexing();
 
-    lexer_t *lexer = create_lexer(source_file_path, source_file_content, source_file_content_size);
+    lexer_t *lexer = create_lexer(source_file_path, NULL);
 
     token_t **tokens = NULL;
 
@@ -262,13 +241,22 @@ int debug_main(int argc, char *argv[])
 
     }
 
-    finish_lexing();
+    quit_lexing();
 
     printf("Starting to parsing the file:\n");
 
     parser_t *parser = create_parser(tokens, tokens_count);
 
     ast_node_t *root_node = parser_parse(parser);
+
+    for (size_t q = 0; q < tokens_count; q++)
+    {
+
+        token_t *token = tokens[q];
+
+        destroy_token(token);
+
+    }
 
     if (!root_node)
     {
