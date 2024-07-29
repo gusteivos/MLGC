@@ -20,14 +20,16 @@ static bool keyword_table_lookup(char *key, size_t key_lenght, token_type_t *typ
 
     void *value = NULL;
 
-    if (type && hash_table_lookup(keyword_table, (uint8_t *)key, key_lenght, &value))
+    bool q = hash_table_lookup(keyword_table, (uint8_t *)key, key_lenght, &value);
+
+    if (q)
     {
 
         *type = (token_type_t)value;
 
     }
 
-    return true;
+    return q;
 
 }
 
